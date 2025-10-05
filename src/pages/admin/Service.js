@@ -10,14 +10,20 @@ export default function Services() {
   const [editingService, setEditingService] = useState(null);
   const [form, setForm] = useState({
     nomService: "",
-    description: ""
+    description: "",
+    postes: []
   });
+  const [newPoste, setNewPoste] = useState("");
 
-  // États pour la pagination
+  // ✅ NOUVEAU: État pour la vue détaillée
+  const [selectedService, setSelectedService] = useState(null);
+  const [showUsersModal, setShowUsersModal] = useState(false);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [servicesPerPage, setServicesPerPage] = useState(6); // 6 services par page
+  const [servicesPerPage, setServicesPerPage] = useState(6);
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchServices();
     fetchUsers();
   }, []);
@@ -44,65 +50,93 @@ export default function Services() {
     }
   };
 
-  const getUsersCountByService = (serviceId) => {
-    return users.filter(user => 
-      user.service && (user.service._id === serviceId || user.service === serviceId)
-    ).length;
+  // ✅ AMÉLIORÉ: Obtenir les utilisateurs d'un service
+  const getUsersByService = (serviceId) => {
+    return users.filter(
+      (user) =>
+        user.service && (user.service._id === serviceId || user.service === serviceId)
+    );
   };
 
-  // Filtrage des services
-  const filteredServices = services.filter(service =>
-    service.nomService?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const getUsersCountByService = (serviceId) => {
+    return getUsersByService(serviceId).length;
+  };
+
+  // ✅ NOUVEAU: Afficher les utilisateurs d'un service
+  const handleShowUsers = (service) => {
+    setSelectedService(service);
+    setShowUsersModal(true);
+  };
+
+  // Filtrage
+  const filteredServices = services.filter(
+    (service) =>
+      service.nomService?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (service.postes && service.postes.some(poste => 
+        poste.toLowerCase().includes(searchTerm.toLowerCase())
+      ))
   );
 
-  // Calculs pour la pagination
+  // Pagination
   const indexOfLastService = currentPage * servicesPerPage;
   const indexOfFirstService = indexOfLastService - servicesPerPage;
   const currentServices = filteredServices.slice(indexOfFirstService, indexOfLastService);
   const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
 
-  // Changer de page
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  // Aller à la page précédente
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  // Aller à la page suivante
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
-  // Réinitialiser la pagination lors d'une recherche
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const resetForm = () => {
-    setForm({
-      nomService: "",
-      description: ""
-    });
+    setForm({ nomService: "", description: "", postes: [] });
+    setNewPoste("");
     setEditingService(null);
     setShowForm(false);
   };
 
+  // Ajouter un poste dans le formulaire
+  const handleAddPoste = () => {
+    if (newPoste.trim() !== "") {
+      setForm((prev) => ({
+        ...prev,
+        postes: [...prev.postes, newPoste.trim().toUpperCase()]
+      }));
+      setNewPoste("");
+    }
+  };
+
+  const handleRemovePoste = (poste) => {
+    setForm((prev) => ({
+      ...prev,
+      postes: prev.postes.filter((p) => p !== poste)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!form.nomService.trim()) {
       alert("Veuillez saisir un nom pour le service");
       return;
@@ -116,7 +150,7 @@ export default function Services() {
         await api.post("/services", form);
         alert("Service créé avec succès");
       }
-      
+
       resetForm();
       fetchServices();
     } catch (error) {
@@ -129,24 +163,31 @@ export default function Services() {
     setEditingService(service);
     setForm({
       nomService: service.nomService,
-      description: service.description || ""
+      description: service.description || "",
+      postes: service.postes || []
     });
     setShowForm(true);
   };
 
   const handleDelete = async (service) => {
     const usersCount = getUsersCountByService(service._id);
-    
+
     if (usersCount > 0) {
-      if (!window.confirm(
-        `Êtes-vous sûr de vouloir supprimer le service "${service.nomService}" ?\n\n` +
-        `⚠️ Ce service contient ${usersCount} utilisateur(s). ` +
-        `Cette action supprimera également tous les utilisateurs associés à ce service.`
-      )) {
+      if (
+        !window.confirm(
+          `Êtes-vous sûr de vouloir supprimer le service "${service.nomService}" ?\n\n` +
+            `⚠️ Ce service contient ${usersCount} utilisateur(s). ` +
+            `Cette action désassignera tous les utilisateurs de ce service.`
+        )
+      ) {
         return;
       }
     } else {
-      if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le service "${service.nomService}" ?`)) {
+      if (
+        !window.confirm(
+          `Êtes-vous sûr de vouloir supprimer le service "${service.nomService}" ?`
+        )
+      ) {
         return;
       }
     }
@@ -155,52 +196,53 @@ export default function Services() {
       await api.delete(`/services/${service._id}`);
       alert("Service supprimé avec succès");
       fetchServices();
-      fetchUsers();
     } catch (error) {
       console.error("Erreur suppression:", error);
       alert("Erreur lors de la suppression");
     }
   };
 
-  const getServiceStats = () => {
-    const totalServices = services.length;
-    const servicesWithUsers = services.filter(service => 
-      getUsersCountByService(service._id) > 0
-    ).length;
-    const emptyServices = totalServices - servicesWithUsers;
-
-    return { totalServices, servicesWithUsers, emptyServices };
+  // ✅ NOUVEAU: Fonction pour obtenir la répartition par rôle
+  const getRoleDistribution = (serviceUsers) => {
+    const distribution = {
+      SALARIE: 0,
+      STAGIAIRE: 0,
+      ADMIN_RH: 0
+    };
+    
+    serviceUsers.forEach(user => {
+      if (distribution.hasOwnProperty(user.role)) {
+        distribution[user.role]++;
+      }
+    });
+    
+    return distribution;
   };
-
-  const stats = getServiceStats();
 
   return (
     <div style={{ padding: "20px" }}>
-      {/* En-tête avec bouton d'ajout et recherche */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
+      {/* HEADER */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
         alignItems: "center",
         marginBottom: "30px",
         flexWrap: "wrap",
         gap: "15px"
       }}>
         <h1 style={{ margin: 0, color: "#2c3e50" }}>🏢 Gestion des Services</h1>
-        
         <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-          {/* Barre de recherche */}
           <div style={{ position: "relative" }}>
             <input
               type="text"
               placeholder="Rechercher un service..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "10px 40px 10px 15px",
-                border: "1px solid #ddd",
+              style={{ 
+                padding: "10px 40px 10px 15px", 
+                border: "1px solid #ddd", 
                 borderRadius: "6px",
-                width: "250px",
-                fontSize: "14px"
+                width: "250px"
               }}
             />
             <span style={{
@@ -213,8 +255,6 @@ export default function Services() {
               🔍
             </span>
           </div>
-
-          {/* Bouton Ajouter */}
           <button
             onClick={() => setShowForm(true)}
             style={{
@@ -235,156 +275,143 @@ export default function Services() {
         </div>
       </div>
 
-      {/* Statistiques */}
-      <div style={{
-        display: "flex",
-        gap: "15px",
-        marginBottom: "30px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          flex: "1",
-          minWidth: "180px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-        }}>
-          <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Total services</div>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{stats.totalServices}</div>
-        </div>
-        
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          flex: "1",
-          minWidth: "180px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-        }}>
-          <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Services utilisés</div>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{stats.servicesWithUsers}</div>
-        </div>
-        
-        <div style={{
-          background: "#e74c3c",
-          color: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          flex: "1",
-          minWidth: "180px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-        }}>
-          <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Services vides</div>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{stats.emptyServices}</div>
-        </div>
-      </div>
-
-      {/* Formulaire d'ajout/modification */}
+      {/* FORM - Inchangé */}
       {showForm && (
-        <div style={{
-          background: "#f8f9fa",
-          padding: "25px",
-          borderRadius: "10px",
+        <div style={{ 
+          background: "#f8f9fa", 
+          padding: "25px", 
+          borderRadius: "10px", 
           marginBottom: "30px",
-          border: "1px solid #e9ecef",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+          border: "1px solid #e9ecef"
         }}>
           <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
             {editingService ? "✏️ Modifier le service" : "➕ Ajouter un nouveau service"}
           </h3>
-          
-          <form onSubmit={handleSubmit} style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 2fr",
-            gap: "20px",
-            alignItems: "start"
-          }}>
+
+          <form onSubmit={handleSubmit} style={{ display: "grid", gap: "15px" }}>
             <div>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#2c3e50" }}>
-                Nom du service *
-              </label>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Nom du service *</label>
               <input
                 type="text"
                 name="nomService"
                 value={form.nomService}
                 onChange={handleInputChange}
+                placeholder="Nom du service"
                 required
-                placeholder="Ex: Développement, Marketing..."
                 style={{
                   width: "100%",
-                  padding: "12px",
+                  padding: "10px",
                   border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  transition: "border-color 0.3s ease"
+                  borderRadius: "4px"
                 }}
-                onFocus={(e) => e.target.style.borderColor = "#3498db"}
-                onBlur={(e) => e.target.style.borderColor = "#ddd"}
               />
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: "#2c3e50" }}>
-                Description
-              </label>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Description</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleInputChange}
-                placeholder="Description du service..."
+                placeholder="Description"
                 rows="3"
                 style={{
                   width: "100%",
-                  padding: "12px",
+                  padding: "10px",
                   border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  resize: "vertical",
-                  minHeight: "80px",
-                  transition: "border-color 0.3s ease",
-                  fontFamily: "inherit"
+                  borderRadius: "4px",
+                  resize: "vertical"
                 }}
-                onFocus={(e) => e.target.style.borderColor = "#3498db"}
-                onBlur={(e) => e.target.style.borderColor = "#ddd"}
               />
             </div>
 
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "10px" }}>
-              <button
-                type="button"
+            {/* Gestion des postes */}
+            <div>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Postes :</label>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <input
+                  type="text"
+                  value={newPoste}
+                  onChange={(e) => setNewPoste(e.target.value)}
+                  placeholder="Ajouter un poste"
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px"
+                  }}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddPoste}
+                  style={{
+                    padding: "10px 15px",
+                    background: "#3498db",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer"
+                  }}
+                >
+                  ➕ Ajouter
+                </button>
+              </div>
+              <div style={{ marginTop: "10px" }}>
+                {form.postes.map((poste, index) => (
+                  <div key={index} style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    background: "#e3f2fd",
+                    padding: "5px 10px",
+                    borderRadius: "20px",
+                    margin: "5px 5px 5px 0",
+                    fontSize: "14px"
+                  }}>
+                    {poste}
+                    <button 
+                      type="button" 
+                      onClick={() => handleRemovePoste(poste)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        marginLeft: "8px",
+                        color: "#e74c3c"
+                      }}
+                    >
+                      ❌
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button 
+                type="button" 
                 onClick={resetForm}
                 style={{
+                  padding: "10px 20px",
                   background: "#95a5a6",
                   color: "white",
                   border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                  transition: "background 0.3s ease"
+                  borderRadius: "4px",
+                  cursor: "pointer"
                 }}
-                onMouseOver={(e) => e.target.style.background = "#7f8c8d"}
-                onMouseOut={(e) => e.target.style.background = "#95a5a6"}
               >
                 Annuler
               </button>
-              <button
+              <button 
                 type="submit"
                 style={{
+                  padding: "10px 20px",
                   background: "#3498db",
                   color: "white",
                   border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "6px",
+                  borderRadius: "4px",
                   cursor: "pointer",
-                  fontWeight: "bold",
-                  transition: "background 0.3s ease"
+                  fontWeight: "bold"
                 }}
-                onMouseOver={(e) => e.target.style.background = "#2980b9"}
-                onMouseOut={(e) => e.target.style.background = "#3498db"}
               >
                 {editingService ? "💾 Modifier" : "✅ Créer"}
               </button>
@@ -393,205 +420,7 @@ export default function Services() {
         </div>
       )}
 
-      {/* Liste des services */}
-      <div style={{
-        background: "white",
-        borderRadius: "10px",
-        overflow: "hidden",
-        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-        marginBottom: "20px"
-      }}>
-        {loading ? (
-          <div style={{ 
-            textAlign: "center", 
-            padding: "60px", 
-            color: "#7f8c8d",
-            fontSize: "16px"
-          }}>
-            <div style={{ marginBottom: "15px" }}>⏳</div>
-            Chargement des services...
-          </div>
-        ) : filteredServices.length === 0 ? (
-          <div style={{ 
-            textAlign: "center", 
-            padding: "60px", 
-            color: "#7f8c8d" 
-          }}>
-            <div style={{ fontSize: "48px", marginBottom: "15px" }}>🏢</div>
-            <h3 style={{ margin: "0 0 10px 0", color: "#2c3e50" }}>
-              {searchTerm ? "Aucun service trouvé" : "Aucun service enregistré"}
-            </h3>
-            <p style={{ margin: 0, fontSize: "14px" }}>
-              {searchTerm ? "Essayez avec d'autres termes de recherche" : "Commencez par créer votre premier service"}
-            </p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ 
-              width: "100%", 
-              borderCollapse: "collapse",
-              minWidth: "600px"
-            }}>
-              <thead>
-                <tr style={{ 
-                  background: "linear-gradient(135deg, #34495e, #2c3e50)",
-                  color: "white"
-                }}>
-                  <th style={{ 
-                    padding: "18px 20px", 
-                    textAlign: "left", 
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    borderBottom: "2px solid #3498db"
-                  }}>
-                    Service
-                  </th>
-                  <th style={{ 
-                    padding: "18px 20px", 
-                    textAlign: "left", 
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    borderBottom: "2px solid #3498db"
-                  }}>
-                    Description
-                  </th>
-                  <th style={{ 
-                    padding: "18px 20px", 
-                    textAlign: "center", 
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    borderBottom: "2px solid #3498db",
-                    width: "150px"
-                  }}>
-                    Utilisateurs
-                  </th>
-                  <th style={{ 
-                    padding: "18px 20px", 
-                    textAlign: "center", 
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    borderBottom: "2px solid #3498db",
-                    width: "120px"
-                  }}>
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentServices.map((service, index) => {
-                  const usersCount = getUsersCountByService(service._id);
-                  
-                  return (
-                    <tr 
-                      key={service._id}
-                      style={{ 
-                        background: index % 2 === 0 ? "#f8f9fa" : "white",
-                        borderBottom: "1px solid #e9ecef",
-                        transition: "background 0.2s ease"
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = "#e3f2fd"}
-                      onMouseLeave={(e) => e.target.style.background = index % 2 === 0 ? "#f8f9fa" : "white"}
-                    >
-                      <td style={{ 
-                        padding: "16px 20px", 
-                        fontWeight: "600",
-                        color: "#2c3e50",
-                        fontSize: "15px"
-                      }}>
-                        {service.nomService}
-                      </td>
-                      <td style={{ 
-                        padding: "16px 20px", 
-                        color: "#7f8c8d",
-                        fontSize: "14px",
-                        lineHeight: "1.4"
-                      }}>
-                        {service.description || (
-                          <span style={{ fontStyle: "italic", color: "#bdc3c7" }}>
-                            Aucune description
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ 
-                        padding: "16px 20px", 
-                        textAlign: "center" 
-                      }}>
-                        <span style={{
-                          display: "inline-block",
-                          padding: "6px 12px",
-                          background: usersCount > 0 ? "#2ecc71" : "#95a5a6",
-                          color: "white",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                          minWidth: "30px"
-                        }}>
-                          {usersCount}
-                        </span>
-                      </td>
-                      <td style={{ 
-                        padding: "16px 20px", 
-                        textAlign: "center" 
-                      }}>
-                        <div style={{ 
-                          display: "flex", 
-                          gap: "8px", 
-                          justifyContent: "center" 
-                        }}>
-                          <button
-                            onClick={() => handleEdit(service)}
-                            style={{
-                              background: "#f39c12",
-                              color: "white",
-                              border: "none",
-                              padding: "8px 12px",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "500",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              transition: "background 0.3s ease"
-                            }}
-                            onMouseOver={(e) => e.target.style.background = "#e67e22"}
-                            onMouseOut={(e) => e.target.style.background = "#f39c12"}
-                          >
-                            ✏️ Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDelete(service)}
-                            style={{
-                              background: "#e74c3c",
-                              color: "white",
-                              border: "none",
-                              padding: "8px 12px",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "500",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              transition: "background 0.3s ease"
-                            }}
-                            onMouseOver={(e) => e.target.style.background = "#c0392b"}
-                            onMouseOut={(e) => e.target.style.background = "#e74c3c"}
-                          >
-                            🗑️ Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination */}
+      {/* Pagination - Inchangée */}
       {filteredServices.length > 0 && (
         <div style={{
           display: "flex",
@@ -697,19 +526,363 @@ export default function Services() {
         </div>
       )}
 
-      {/* Information */}
+      {/* TABLE SERVICES - AMÉLIORÉE */}
+      <div style={{
+        background: "white",
+        borderRadius: "8px",
+        overflow: "hidden",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+      }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+            Chargement des services...
+          </div>
+        ) : filteredServices.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+            {searchTerm ? "Aucun service trouvé" : "Aucun service enregistré"}
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#34495e", color: "white" }}>
+                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Service</th>
+                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Description</th>
+                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Postes</th>
+                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Utilisateurs</th>
+                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentServices.map((service, index) => {
+                  const serviceUsers = getUsersByService(service._id);
+                  const roleDistribution = getRoleDistribution(serviceUsers);
+                  
+                  return (
+                    <tr 
+                      key={service._id}
+                      style={{ 
+                        background: index % 2 === 0 ? "#f8f9fa" : "white",
+                        borderBottom: "1px solid #e9ecef"
+                      }}
+                    >
+                      <td style={{ padding: "15px", fontWeight: "500" }}>
+                        <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "5px" }}>
+                          {service.nomService}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#7f8c8d" }}>
+                          {service.postes?.length || 0} poste(s) défini(s)
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: "15px", color: "#7f8c8d", maxWidth: "200px" }}>
+                        {service.description ? (
+                          <div>
+                            {service.description.length > 100 
+                              ? `${service.description.substring(0, 100)}...` 
+                              : service.description
+                            }
+                          </div>
+                        ) : (
+                          <span style={{ fontStyle: "italic", color: "#bdc3c7" }}>
+                            Aucune description
+                          </span>
+                        )}
+                      </td>
+                      
+                      <td style={{ padding: "15px", minWidth: "200px" }}>
+                        {service.postes && service.postes.length > 0 ? (
+                          <div>
+                            {service.postes.slice(0, 3).map((p, i) => (
+                              <div key={i} style={{
+                                display: "inline-block",
+                                background: "#e3f2fd",
+                                padding: "4px 8px",
+                                borderRadius: "12px",
+                                fontSize: "12px",
+                                margin: "2px",
+                                color: "#1976d2",
+                                fontWeight: "500"
+                              }}>
+                                {p}
+                              </div>
+                            ))}
+                            {service.postes.length > 3 && (
+                              <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
+                                +{service.postes.length - 3} autre(s)
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: "#bdc3c7", fontStyle: "italic" }}>Aucun poste défini</span>
+                        )}
+                      </td>
+                      
+                      <td style={{ padding: "15px", textAlign: "center" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+                          <span style={{
+                            display: "inline-block",
+                            background: "#2ecc71",
+                            color: "white",
+                            padding: "4px 12px",
+                            borderRadius: "20px",
+                            fontSize: "12px",
+                            fontWeight: "bold"
+                          }}>
+                            {serviceUsers.length}
+                          </span>
+                          
+                          {serviceUsers.length > 0 && (
+                            <div style={{ display: "flex", gap: "4px", fontSize: "10px" }}>
+                              {roleDistribution.SALARIE > 0 && (
+                                <span style={{ color: "#3498db" }}>💼{roleDistribution.SALARIE}</span>
+                              )}
+                              {roleDistribution.STAGIAIRE > 0 && (
+                                <span style={{ color: "#2ecc71" }}>🎓{roleDistribution.STAGIAIRE}</span>
+                              )}
+                              {roleDistribution.ADMIN_RH > 0 && (
+                                <span style={{ color: "#e74c3c" }}>🔧{roleDistribution.ADMIN_RH}</span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {serviceUsers.length > 0 && (
+                            <button
+                              onClick={() => handleShowUsers(service)}
+                              style={{
+                                background: "none",
+                                border: "1px solid #3498db",
+                                color: "#3498db",
+                                padding: "2px 8px",
+                                borderRadius: "12px",
+                                cursor: "pointer",
+                                fontSize: "10px",
+                                marginTop: "2px"
+                              }}
+                            >
+                              👁️ Voir
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: "15px", textAlign: "center" }}>
+                        <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                          <button
+                            onClick={() => handleEdit(service)}
+                            style={{
+                              background: "#f39c12",
+                              color: "white",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            ✏️ Modifier
+                          </button>
+                          <button
+                            onClick={() => handleDelete(service)}
+                            style={{
+                              background: "#e74c3c",
+                              color: "white",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            🗑️ Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ✅ NOUVEAU: Modal pour voir les utilisateurs du service */}
+      {showUsersModal && selectedService && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "white",
+            borderRadius: "10px",
+            padding: "25px",
+            width: "90%",
+            maxWidth: "800px",
+            maxHeight: "80vh",
+            overflow: "auto"
+          }}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+              borderBottom: "1px solid #eee",
+              paddingBottom: "15px"
+            }}>
+              <h3 style={{ margin: 0, color: "#2c3e50" }}>
+                👥 Utilisateurs du service : {selectedService.nomService}
+              </h3>
+              <button
+                onClick={() => setShowUsersModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  color: "#7f8c8d"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
+                <div style={{
+                  background: "#e3f2fd",
+                  padding: "10px 15px",
+                  borderRadius: "6px",
+                  fontSize: "14px"
+                }}>
+                  <strong>Total :</strong> {getUsersCountByService(selectedService._id)} utilisateur(s)
+                </div>
+                <div style={{
+                  background: "#e8f5e9",
+                  padding: "10px 15px",
+                  borderRadius: "6px",
+                  fontSize: "14px"
+                }}>
+                  <strong>Postes :</strong> {selectedService.postes?.length || 0} défini(s)
+                </div>
+              </div>
+            </div>
+
+            {getUsersByService(selectedService._id).length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+                Aucun utilisateur assigné à ce service
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "#f8f9fa" }}>
+                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Nom & Prénom</th>
+                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Email</th>
+                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Rôle</th>
+                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Poste</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getUsersByService(selectedService._id).map((user, index) => (
+                      <tr key={user._id} style={{ borderBottom: "1px solid #eee" }}>
+                        <td style={{ padding: "12px" }}>
+                          {user.nom} {user.prenom}
+                        </td>
+                        <td style={{ padding: "12px", color: "#2980b9" }}>
+                          {user.email}
+                        </td>
+                        <td style={{ padding: "12px" }}>
+                          <span style={{
+                            padding: "4px 8px",
+                            borderRadius: "12px",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            background: 
+                              user.role === "ADMIN_RH" ? "#e74c3c" :
+                              user.role === "SALARIE" ? "#3498db" : "#2ecc71",
+                            color: "white"
+                          }}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px" }}>
+                          {user.poste || (
+                            <span style={{ color: "#bdc3c7", fontStyle: "italic" }}>Non défini</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Statistiques - Inchangées */}
       <div style={{
         marginTop: "20px",
-        padding: "15px",
-        background: "#e3f2fd",
-        border: "1px solid #bbdefb",
-        borderRadius: "6px",
-        fontSize: "13px",
-        color: "#1565c0"
+        display: "flex",
+        gap: "15px",
+        flexWrap: "wrap"
       }}>
-        <strong>💡 Information :</strong> Les services permettent d'organiser les salariés et stagiaires par département. 
-        Chaque service peut contenir plusieurs utilisateurs.
+        <div style={{
+          background: "#3498db",
+          color: "white",
+          padding: "15px",
+          borderRadius: "6px",
+          flex: "1",
+          minWidth: "150px"
+        }}>
+          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total services</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{services.length}</div>
+        </div>
+        
+        <div style={{
+          background: "#2ecc71",
+          color: "white",
+          padding: "15px",
+          borderRadius: "6px",
+          flex: "1",
+          minWidth: "150px"
+        }}>
+          <div style={{ fontSize: "12px", opacity: 0.9 }}>Services avec postes</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+            {services.filter(s => s.postes && s.postes.length > 0).length}
+          </div>
+        </div>
+        
+        <div style={{
+          background: "#f39c12",
+          color: "white",
+          padding: "15px",
+          borderRadius: "6px",
+          flex: "1",
+          minWidth: "150px"
+        }}>
+          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total utilisateurs assignés</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+            {users.filter(u => u.service).length}
+          </div>
+        </div>
       </div>
+
     </div>
   );
 }

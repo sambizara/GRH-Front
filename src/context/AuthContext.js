@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ← true initialement
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -14,33 +14,42 @@ export const AuthProvider = ({ children }) => {
     if (token && userData) {
       setUser(JSON.parse(userData));
     }
-    setLoading(false); // ← Fin du chargement initial
+    setLoading(false);
   }, []);
 
   const login = async (email, motDePasse) => {
-    setLoading(true);
-    try {
-      const response = await api.post("/auth/login", {
-        email,
-        motDePasse,
-      });
+  setLoading(true);
+  try {
+    console.log("🔄 AuthContext - Tentative de connexion...");
+    console.log("📤 Données envoyées:", { email, password: motDePasse }); // ← Changé ici
+    
+    const response = await api.post("/auth/login", {
+      email,
+      password: motDePasse, // ← ICI : motDePasse → password
+    });
 
-      // Stockage cohérent
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+    console.log("✅ AuthContext - Réponse reçue:", response.data);
+    
+    localStorage.setItem("token", response.data.token);
+    localStorage.setItem("user", JSON.stringify(response.data.user));
+    setUser(response.data.user);
 
-      setUser(response.data.user);
+    return response.data;
 
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Erreur de connexion",
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error("❌ AuthContext - Erreur attrapée:");
+    console.error("Status:", error.response?.status);
+    console.error("Data:", error.response?.data);
+    console.error("Message:", error.message);
+    
+    return {
+      token: null,
+      message: error.response?.data?.message || "Erreur de connexion au serveur",
+    };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const logout = () => {
     localStorage.removeItem("token");

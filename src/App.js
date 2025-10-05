@@ -20,6 +20,7 @@ import Presence from "./pages/admin/Presence";
 import Conges from "./pages/admin/Conges";
 import Attestations from "./pages/admin/Attestations";
 import Rapports from "./pages/admin/Rapport";
+import Stages from "./pages/admin/Stage";
 
 // Pages SALARIE
 import ProfilSalarie from "./pages/salarie/Profil";
@@ -58,6 +59,7 @@ function App() {
             <Route path="service" element={<Services />} />
             <Route path="presence" element={<Presence />} />
             <Route path="conges" element={<Conges />} />
+            <Route path="stage" element={<Stages/>} />
             <Route path="attestations" element={<Attestations />} />
             <Route path="rapports" element={<Rapports />} />
           </Route>

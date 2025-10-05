@@ -34,6 +34,7 @@ export default function Sidebar() {
             <li><Link to="/admin/conges" style={linkStyle}>📅 Congés</Link></li>
             <li><Link to="/admin/attestations" style={linkStyle}>📄 Attestations</Link></li>
             <li><Link to="/admin/rapports" style={linkStyle}>📘 Rapports</Link></li>
+            <li><Link to="/admin/stage" style={linkStyle}>🎓 Stage</Link></li>
             <li><Link to="/admin/presence" style={linkStyle}>📋 Présences</Link></li>
           </>
         )}
