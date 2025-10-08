@@ -4,7 +4,7 @@ import api from "../../api/axiosConfig";
 export default function Conges() {
   const [conges, setConges] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const userRole = "ADMIN_RH"; // À adapter selon l'utilisateur connecté
 
@@ -56,14 +56,13 @@ export default function Conges() {
   const fetchConges = async () => {
     setLoading(true);
     try {
-      let endpoint = "/conges/admin/tous"; // ⭐ CORRECTION: Route admin
+      let endpoint = "/conges/admin/tous";
       
       console.log("🌐 Chargement des congés admin...");
       const response = await api.get(endpoint);
       
       console.log("✅ Réponse admin:", response.data);
       
-      // ⭐ CORRECTION: Gestion de la réponse
       if (response.data.success) {
         setConges(response.data.conges || []);
       } else {
@@ -90,8 +89,14 @@ export default function Conges() {
       dateFin: new Date().toISOString().split('T')[0],
       motif: ""
     });
-    setShowForm(false);
+    setShowModal(false);
     setCurrentPage(1);
+  };
+
+  // Ouvrir le modal pour ajouter
+  const handleAddConge = () => {
+    resetForm();
+    setShowModal(true);
   };
 
   // Soumettre une demande de congé (pour les salariés)
@@ -122,7 +127,6 @@ export default function Conges() {
   // Changer le statut (Approuvé / Rejeté) - pour les ADMIN_RH
   const updateStatut = async (id, statut) => {
     try {
-      // ⭐ CORRECTION: Route admin pour mise à jour
       await api.put(`/conges/admin/${id}/statut`, { statut });
       alert(`Congé ${statut.toLowerCase()} avec succès`);
       fetchConges();
@@ -148,74 +152,67 @@ export default function Conges() {
     }
   };
 
-  // Fonction pour obtenir le style du statut
-  const getStatutStyle = (statut) => {
+  // Fonction pour obtenir la classe du statut
+  const getStatutClass = (statut) => {
     switch (statut) {
       case "Approuvé":
-        return { background: "#2ecc71", color: "white" };
+        return "bg-green-500 text-white";
       case "Rejeté":
-        return { background: "#e74c3c", color: "white" };
+        return "bg-red-500 text-white";
       case "En Attente":
-        return { background: "#f39c12", color: "white" };
+        return "bg-yellow-500 text-white";
       default:
-        return { background: "#bdc3c7", color: "white" };
+        return "bg-gray-500 text-white";
     }
   };
 
-  // Fonction pour obtenir le style du type de congé
-  const getTypeCongeStyle = (typeConge) => {
+  // Fonction pour obtenir la classe du type de congé
+  const getTypeCongeClass = (typeConge) => {
     switch (typeConge) {
       case "Annuel":
-        return { background: "#3498db", color: "white" };
+        return "bg-blue-500 text-white";
       case "Maladie":
-        return { background: "#e74c3c", color: "white" };
+        return "bg-red-500 text-white";
       case "Sans Solde":
-        return { background: "#95a5a6", color: "white" };
+        return "bg-gray-500 text-white";
       case "Maternité":
-        return { background: "#9b59b6", color: "white" };
+        return "bg-purple-500 text-white";
       case "Paternité":
-        return { background: "#1abc9c", color: "white" };
+        return "bg-teal-500 text-white";
       default:
-        return { background: "#bdc3c7", color: "white" };
+        return "bg-gray-400 text-white";
     }
   };
 
+  // Obtenir les statistiques
+  const getStats = () => {
+    const total = conges.length;
+    const enAttente = conges.filter(c => c.statut === "En Attente").length;
+    const approuves = conges.filter(c => c.statut === "Approuvé").length;
+    const rejetes = conges.filter(c => c.statut === "Rejeté").length;
+
+    return { total, enAttente, approuves, rejetes };
+  };
+
+  const stats = getStats();
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* En-tête avec bouton d'ajout et recherche */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "30px",
-        flexWrap: "wrap",
-        gap: "15px"
-      }}>
-        <h1 style={{ margin: 0, color: "#2c3e50" }}>📅 Gestion des Congés</h1>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">📅 Gestion des Congés</h1>
         
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           {/* Barre de recherche */}
-          <div style={{ position: "relative" }}>
+          <div className="relative flex-1 sm:w-64">
             <input
               type="text"
               placeholder="Rechercher un congé..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "10px 40px 10px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                width: "250px",
-                fontSize: "14px"
-              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
             />
-            <span style={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#7f8c8d"
-            }}>
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               🔍
             </span>
           </div>
@@ -223,252 +220,168 @@ export default function Conges() {
           {/* Bouton Demander un congé (seulement pour les salariés) */}
           {userRole === "SALARIE" && (
             <button
-              onClick={() => setShowForm(true)}
-              style={{
-                background: "#27ae60",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px"
-              }}
+              onClick={handleAddConge}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
             >
-              ➕ Demander un congé
+              <span>➕</span>
+              Demander un congé
             </button>
           )}
         </div>
       </div>
 
-      {/* Formulaire de demande de congé (seulement pour les salariés) */}
-      {showForm && userRole === "SALARIE" && (
-        <div style={{
-          background: "#f8f9fa",
-          padding: "25px",
-          borderRadius: "10px",
-          marginBottom: "30px",
-          border: "1px solid #e9ecef"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            📝 Nouvelle demande de congé
-          </h3>
-          
-          <form onSubmit={handleSubmit} style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "15px"
-          }}>
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Type de congé *</label>
-              <select
-                name="typeConge"
-                value={form.typeConge}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  background: "white"
-                }}
-              >
-                <option value="Annuel">Annuel</option>
-                <option value="Maladie">Maladie</option>
-                <option value="Sans Solde">Sans solde</option>
-                <option value="Maternité">Maternité</option>
-                <option value="Paternité">Paternité</option>
-              </select>
+      {/* MODAL FORMULAIRE */}
+      {showModal && userRole === "SALARIE" && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="bg-gray-800 text-white px-6 py-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">
+                  📝 Nouvelle demande de congé
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date de début *</label>
-              <input
-                type="date"
-                name="dateDebut"
-                value={form.dateDebut}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type de congé *</label>
+                  <select
+                    name="typeConge"
+                    value={form.typeConge}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                  >
+                    <option value="Annuel">Annuel</option>
+                    <option value="Maladie">Maladie</option>
+                    <option value="Sans Solde">Sans solde</option>
+                    <option value="Maternité">Maternité</option>
+                    <option value="Paternité">Paternité</option>
+                  </select>
+                </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date de fin *</label>
-              <input
-                type="date"
-                name="dateFin"
-                value={form.dateFin}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date de début *</label>
+                  <input
+                    type="date"
+                    name="dateDebut"
+                    value={form.dateDebut}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
 
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Motif</label>
-              <textarea
-                name="motif"
-                value={form.motif}
-                onChange={handleInputChange}
-                placeholder="Raison de la demande de congé..."
-                rows="3"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  resize: "vertical"
-                }}
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date de fin *</label>
+                  <input
+                    type="date"
+                    name="dateFin"
+                    value={form.dateFin}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
 
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#3498db",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
-              >
-                Soumettre la demande
-              </button>
+                <div className="md:col-span-2 lg:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Motif</label>
+                  <textarea
+                    name="motif"
+                    value={form.motif}
+                    onChange={handleInputChange}
+                    placeholder="Raison de la demande de congé..."
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 resize-vertical"
+                  />
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-3 flex gap-3 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Soumettre la demande
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {filteredConges.length > 0 && (
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "15px 20px",
-          background: "#f8f9fa",
-          border: "1px solid #e9ecef",
-          borderRadius: "8px",
-          marginBottom: "20px"
-        }}>
-          <div style={{ color: "#6c757d", fontSize: "14px" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-600 text-sm">
             Affichage de {indexOfFirstConge + 1} à {Math.min(indexOfLastConge, filteredConges.length)} sur {filteredConges.length} congé(s)
           </div>
           
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Bouton Précédent */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === 1 ? "#f8f9fa" : "white",
-                color: currentPage === 1 ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               ◀ Précédent
             </button>
 
-            {/* Numéros de page */}
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "1px solid #dee2e6",
-                    background: currentPage === page ? "#007bff" : "white",
-                    color: currentPage === page ? "white" : "#007bff",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    minWidth: "40px"
-                  }}
+                  className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
+                    currentPage === page 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
 
-            {/* Bouton Suivant */}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === totalPages ? "#f8f9fa" : "white",
-                color: currentPage === totalPages ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Suivant ▶
             </button>
           </div>
 
-          {/* Sélecteur d'éléments par page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "#6c757d" }}>Congés par page:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Congés par page:</span>
             <select
               value={congesPerPage}
               onChange={(e) => {
                 setCongesPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #dee2e6",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -481,128 +394,91 @@ export default function Conges() {
       )}
 
       {/* Tableau des congés */}
-      <div style={{
-        background: "white",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-      }}>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            Chargement des congés...
+          <div className="text-center py-10 text-gray-500">
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-800"></div>
+              Chargement des congés...
+            </div>
           </div>
         ) : filteredConges.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+          <div className="text-center py-10 text-gray-500">
             {searchTerm ? "Aucun congé trouvé" : "Aucun congé enregistré"}
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: "#34495e", color: "white" }}>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Employé</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Type</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Date début</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Date fin</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Motif</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Statut</th>
-                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Actions</th>
+                <tr className="bg-gray-800 text-white">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Employé</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Date début</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Date fin</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Motif</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Statut</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {currentConges.map((conge, index) => (
                   <tr 
                     key={conge._id}
-                    style={{ 
-                      background: index % 2 === 0 ? "#f8f9fa" : "white",
-                      borderBottom: "1px solid #e9ecef"
-                    }}
+                    className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
-                    <td style={{ padding: "15px" }}>
-                      <div style={{ fontWeight: "500" }}>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">
                         {conge.user ? `${conge.user.nom} ${conge.user.prenom}` : "-"}
                       </div>
-                      <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
+                      <div className="text-xs text-gray-500 mt-1">
                         <div>
                           {conge.user?.role}
                           {conge.user?.service?.nomService ? ` • ${conge.user.service.nomService}` : " • Aucun service"}
                         </div>
                         {conge.user?.poste && (
-                          <div style={{ marginTop: "2px" }}>
+                          <div className="mt-1">
                             📝 {conge.user.poste}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: "15px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        ...getTypeCongeStyle(conge.typeConge)
-                      }}>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTypeCongeClass(conge.typeConge)}`}>
                         {conge.typeConge}
                       </span>
                     </td>
-                    <td style={{ padding: "15px", color: "#7f8c8d" }}>
+                    <td className="px-4 py-3 text-gray-600">
                       {new Date(conge.dateDebut).toLocaleDateString('fr-FR')}
                     </td>
-                    <td style={{ padding: "15px", color: "#7f8c8d" }}>
+                    <td className="px-4 py-3 text-gray-600">
                       {new Date(conge.dateFin).toLocaleDateString('fr-FR')}
                     </td>
-                    <td style={{ padding: "15px", color: "#7f8c8d", maxWidth: "200px" }}>
+                    <td className="px-4 py-3 text-gray-600 max-w-[200px]">
                       {conge.motif || "-"}
                     </td>
-                    <td style={{ padding: "15px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        ...getStatutStyle(conge.statut)
-                      }}>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatutClass(conge.statut)}`}>
                         {conge.statut}
                       </span>
                     </td>
-                    <td style={{ padding: "15px", textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-center">
                         {/* Actions pour ADMIN_RH */}
                         {userRole === "ADMIN_RH" && conge.statut === "En Attente" && (
                           <>
                             <button
                               onClick={() => updateStatut(conge._id, "Approuvé")}
-                              style={{
-                                background: "#2ecc71",
-                                color: "white",
-                                border: "none",
-                                padding: "6px 12px",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                fontSize: "12px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px"
-                              }}
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                             >
-                              ✅ Approuver
+                              <span>✅</span>
+                              Approuver
                             </button>
                             <button
                               onClick={() => updateStatut(conge._id, "Rejeté")}
-                              style={{
-                                background: "#e74c3c",
-                                color: "white",
-                                border: "none",
-                                padding: "6px 12px",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                fontSize: "12px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px"
-                              }}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                             >
-                              ❌ Rejeter
+                              <span>❌</span>
+                              Rejeter
                             </button>
                           </>
                         )}
@@ -611,20 +487,10 @@ export default function Conges() {
                         {(userRole === "ADMIN_RH" || (userRole === "SALARIE" && conge.statut === "En Attente")) && (
                           <button
                             onClick={() => handleDelete(conge)}
-                            style={{
-                              background: "#95a5a6",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
+                            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                           >
-                            🗑️ Supprimer
+                            <span>🗑️</span>
+                            Supprimer
                           </button>
                         )}
                       </div>
@@ -638,64 +504,25 @@ export default function Conges() {
       </div>
 
       {/* Statistiques */}
-      <div style={{
-        marginTop: "20px",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total demandes</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{conges.length}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="bg-blue-500 text-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm opacity-90">Total demandes</div>
+          <div className="text-2xl font-bold">{stats.total}</div>
         </div>
         
-        <div style={{
-          background: "#f39c12",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>En attente</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {conges.filter(c => c.statut === "En Attente").length}
-          </div>
+        <div className="bg-yellow-500 text-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm opacity-90">En attente</div>
+          <div className="text-2xl font-bold">{stats.enAttente}</div>
         </div>
         
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Approuvés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {conges.filter(c => c.statut === "Approuvé").length}
-          </div>
+        <div className="bg-green-500 text-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm opacity-90">Approuvés</div>
+          <div className="text-2xl font-bold">{stats.approuves}</div>
         </div>
         
-        <div style={{
-          background: "#e74c3c",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Rejetés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {conges.filter(c => c.statut === "Rejeté").length}
-          </div>
+        <div className="bg-red-500 text-white p-4 rounded-lg shadow-sm">
+          <div className="text-sm opacity-90">Rejetés</div>
+          <div className="text-2xl font-bold">{stats.rejetes}</div>
         </div>
       </div>
     </div>

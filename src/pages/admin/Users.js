@@ -299,7 +299,7 @@ export default function Users() {
     setShowModal(true);
   };
 
-  // Ajouter/Modifier un utilisateur - CORRECTION COMPLÈTE
+  // Ajouter/Modifier un utilisateur - VERSION CORRIGÉE
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -354,21 +354,38 @@ export default function Users() {
       console.log("📤 Données envoyées:", userData);
 
       if (editingUser) {
-        // MODIFICATION - Solution robuste
-        await api.put(`/users/${editingUser._id}`, userData);
-        
-        // Recharger les données fraîches depuis le backend
-        await fetchUsers();
-        
-        alert("Utilisateur modifié avec succès");
+        // MODIFICATION - Version corrigée avec meilleure gestion d'erreur
+        try {
+          await api.put(`/users/${editingUser._id}`, userData);
+          
+          // Recharger les données fraîches depuis le backend
+          await fetchUsers();
+          
+          alert("Utilisateur modifié avec succès");
+          resetForm();
+        } catch (error) {
+          console.error("Erreur détaillée modification:", error);
+          
+          const errorMessage = error.response?.data?.message || 
+                              error.response?.data?.error || 
+                              "Erreur lors de la modification";
+          
+          if (errorMessage.includes("matricule") || errorMessage.includes("Matricule")) {
+            alert("Erreur: Ce matricule est déjà utilisé par un autre salarié");
+          } else if (errorMessage.includes("email") || errorMessage.includes("Email")) {
+            alert("Erreur: Cet email est déjà utilisé");
+          } else {
+            alert(`Erreur lors de la modification: ${errorMessage}`);
+          }
+          // Ne pas resetForm en cas d'erreur pour permettre à l'utilisateur de corriger
+        }
       } else {
         // CRÉATION
         const response = await api.post("/users", userData);
-        setUsers(prevUsers => [...prevUsers, response.data]);
+        setUsers(prevUsers => [...prevUsers, response.data.user]);
         alert("Utilisateur créé avec succès");
+        resetForm();
       }
-      
-      resetForm();
       
     } catch (error) {
       console.error("Erreur détaillée:", error);
@@ -392,6 +409,9 @@ export default function Users() {
   const handleEdit = (user) => {
     console.log("✏️ Modification user:", user);
     console.log("📝 Matricule actuel:", user.matricule);
+    console.log("📅 Date embauche actuelle:", user.dateEmbauche);
+    console.log("🎓 Filière actuelle:", user.filiere);
+    console.log("📅 Date fin stage actuelle:", user.dateFinStage);
     
     setEditingUser(user);
     setForm({
