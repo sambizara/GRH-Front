@@ -3,18 +3,13 @@ import api from "../../api/axiosConfig";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState(null);
-  
-  // État pour les onglets
   const [activeTab, setActiveTab] = useState('tous');
-  
-  // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [usersPerPage, setUsersPerPage] = useState(10);
+  const [usersPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     nom: "",
@@ -23,32 +18,33 @@ export default function Users() {
     sexe: "Homme",
     role: "SALARIE",
     motDePasse: "",
-    service: "",
-    poste: "",
     dateNaissance: "2000-01-01",
-    adresse: "Non spécifiée",
+    adresse: "",
+    telephone: "",
     // Champs spécifiques aux salariés
     dateEmbauche: new Date().toISOString().split('T')[0],
+    matricule: "",
+    situationFamiliale: "Célibataire",
+    nombreEnfants: 0,
     // Champs spécifiques aux stagiaires
     ecole: "",
     filiere: "",
-    niveau: "L3",
-    dateDebut: new Date().toISOString().split('T')[0],
-    dateFin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    niveau: "Licence 3",
+    dateDebutStage: new Date().toISOString().split('T')[0],
+    dateFinStage: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    tuteur: ""
   });
 
-  // Filtrer les utilisateurs par onglet actif
+  // Filtrer les utilisateurs - AJOUT DE LA RECHERCHE PAR MATRICULE
   const getFilteredUsers = () => {
     let filtered = users.filter(user =>
       user.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.service && user.service.nom?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user.poste && user.poste.toLowerCase().includes(searchTerm.toLowerCase()))
+      (user.matricule && user.matricule.toLowerCase().includes(searchTerm.toLowerCase())) // Recherche par matricule
     );
 
-    // Appliquer le filtre d'onglet
     if (activeTab !== 'tous') {
       filtered = filtered.filter(user => user.role === activeTab);
     }
@@ -57,19 +53,16 @@ export default function Users() {
   };
 
   const filteredUsers = getFilteredUsers();
-  
-  // Calculs pour la pagination
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
-  // Réinitialiser la pagination quand l'onglet change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, searchTerm]);
 
-   // ✅ NOUVEAU: Fonction pour déterminer les colonnes à afficher
+  // Fonction pour déterminer les colonnes à afficher
   const getTableHeaders = () => {
     const baseHeaders = [
       { key: 'nom', label: 'Nom & Prénom' },
@@ -80,8 +73,7 @@ export default function Users() {
     if (activeTab === 'tous') {
       return [
         ...baseHeaders,
-        { key: 'service', label: 'Service' },
-        { key: 'poste', label: 'Poste' },
+        { key: 'matricule', label: 'Matricule' }, // Ajout du matricule pour tous
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -90,10 +82,9 @@ export default function Users() {
     if (activeTab === 'SALARIE') {
       return [
         ...baseHeaders,
-        { key: 'service', label: 'Service' },
-        { key: 'poste', label: 'Poste' },
+        { key: 'matricule', label: 'Matricule' },
         { key: 'dateEmbauche', label: 'Date embauche' },
-        { key: 'salaire', label: 'Salaire' },
+        { key: 'situationFamiliale', label: 'Situation' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -105,9 +96,8 @@ export default function Users() {
         { key: 'ecole', label: 'École' },
         { key: 'filiere', label: 'Filière' },
         { key: 'niveau', label: 'Niveau' },
-        { key: 'dateDebut', label: 'Début stage' },
-        { key: 'dateFin', label: 'Fin stage' },
-        { key: 'service', label: 'Service' },
+        { key: 'dateDebutStage', label: 'Début stage' },
+        { key: 'dateFinStage', label: 'Fin stage' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -124,67 +114,57 @@ export default function Users() {
     return baseHeaders;
   };
 
-   // ✅ NOUVEAU: Fonction pour afficher le contenu des cellules
+  // Fonction pour afficher le contenu des cellules - AJOUT DU MATRICULE
   const renderCellContent = (user, columnKey) => {
     switch (columnKey) {
       case 'nom':
         return (
-          <div style={{ fontWeight: "500" }}>
+          <div className="font-medium text-gray-900">
             {user.nom} {user.prenom}
           </div>
         );
 
       case 'email':
         return (
-          <div style={{ color: "#2980b9" }}>
+          <div className="text-gray-600">
             {user.email}
           </div>
         );
 
       case 'role':
+        const roleStyles = {
+          "ADMIN_RH": "bg-gray-100 text-gray-800 border border-gray-300",
+          "SALARIE": "bg-blue-50 text-blue-800 border border-blue-200",
+          "STAGIAIRE": "bg-green-50 text-green-800 border border-green-200"
+        };
         return (
-          <span style={{
-            padding: "4px 12px",
-            borderRadius: "20px",
-            fontSize: "12px",
-            fontWeight: "bold",
-            background: 
-              user.role === "ADMIN_RH" ? "#e74c3c" :
-              user.role === "SALARIE" ? "#3498db" : "#2ecc71",
-            color: "white"
-          }}>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${roleStyles[user.role]}`}>
             {user.role}
           </span>
         );
 
-      case 'service':
-        return user.service ? user.service.nomService : "-";
-
-      case 'poste':
-        return user.poste ? (
-          <span style={{
-            display: "inline-block",
-            background: "#e3f2fd",
-            color: "#1976d2",
-            padding: "4px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          }}>
-            {user.poste}
+      case 'matricule':
+        return user.matricule ? (
+          <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm font-mono font-bold border border-blue-200">
+            {user.matricule}
           </span>
-        ) : "-";
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        );
 
       case 'dateEmbauche':
         return user.dateEmbauche ? (
-          <div style={{ fontSize: "13px", color: "#7f8c8d" }}>
+          <div className="text-sm text-gray-600">
             {new Date(user.dateEmbauche).toLocaleDateString('fr-FR')}
           </div>
         ) : "-";
 
-      case 'salaire':
-        // Vous pouvez ajouter le salaire plus tard quand vous l'aurez dans votre modèle
-        return "-";
+      case 'situationFamiliale':
+        return user.situationFamiliale ? (
+          <span className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+            {user.situationFamiliale}
+          </span>
+        ) : "-";
 
       case 'ecole':
         return user.ecole || "-";
@@ -194,76 +174,48 @@ export default function Users() {
 
       case 'niveau':
         return user.niveau ? (
-          <span style={{
-            display: "inline-block",
-            background: "#e8f5e9",
-            color: "#2e7d32",
-            padding: "4px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          }}>
+          <span className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
             {user.niveau}
           </span>
         ) : "-";
 
-      case 'dateDebut':
-        return user.dateDebut ? (
-          <div style={{ fontSize: "13px", color: "#7f8c8d" }}>
-            {new Date(user.dateDebut).toLocaleDateString('fr-FR')}
+      case 'dateDebutStage':
+        return user.dateDebutStage ? (
+          <div className="text-sm text-gray-600">
+            {new Date(user.dateDebutStage).toLocaleDateString('fr-FR')}
           </div>
         ) : "-";
 
-      case 'dateFin':
-        return user.dateFin ? (
-          <div style={{ fontSize: "13px", color: "#7f8c8d" }}>
-            {new Date(user.dateFin).toLocaleDateString('fr-FR')}
+      case 'dateFinStage':
+        return user.dateFinStage ? (
+          <div className="text-sm text-gray-600">
+            {new Date(user.dateFinStage).toLocaleDateString('fr-FR')}
           </div>
         ) : "-";
 
       case 'dateCreation':
         return (
-          <div style={{ fontSize: "13px", color: "#7f8c8d" }}>
+          <div className="text-sm text-gray-600">
             {new Date(user.createdAt).toLocaleDateString('fr-FR')}
           </div>
         );
 
       case 'actions':
         return (
-          <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+          <div className="flex gap-2 justify-center">
             <button
               onClick={() => handleEdit(user)}
-              style={{
-                background: "#f39c12",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
             >
-              ✏️ Modifier
+              <span>✏️</span>
+              Modifier
             </button>
             <button
               onClick={() => handleDelete(user)}
-              style={{
-                background: "#e74c3c",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className="bg-gray-200 hover:bg-red-100 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
             >
-              🗑️ Supprimer
+              <span>🗑️</span>
+              Supprimer
             </button>
           </div>
         );
@@ -273,7 +225,7 @@ export default function Users() {
     }
   };
 
-  // Fonctions de navigation
+  // Navigation des pages
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -290,15 +242,14 @@ export default function Users() {
     setCurrentPage(pageNumber);
   };
 
-  // Charger les utilisateurs ET les services
+  // Charger les utilisateurs
   useEffect(() => {
     fetchUsers();
-    fetchServices();
   }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const response = await api.get("/users");
       setUsers(response.data);
     } catch (error) {
@@ -309,30 +260,10 @@ export default function Users() {
     }
   };
 
-  // Charger la liste des services
-  const fetchServices = async () => {
-    try {
-      const response = await api.get("/services");
-      setServices(response.data);
-    } catch (error) {
-      console.error("Erreur chargement services:", error);
-      alert("Erreur lors du chargement des services");
-    }
-  };
-
   // Gestion du formulaire
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name === "service") {
-      setForm(prev => ({ 
-        ...prev, 
-        service: value,
-        poste: ""
-      }));
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   // Réinitialiser le formulaire
@@ -344,28 +275,31 @@ export default function Users() {
       sexe: "Homme",
       role: "SALARIE",
       motDePasse: "",
-      service: "",
-      poste: "",
       dateNaissance: "2000-01-01",
-      adresse: "Non spécifiée",
+      adresse: "",
+      telephone: "",
       dateEmbauche: new Date().toISOString().split('T')[0],
+      matricule: "",
+      situationFamiliale: "Célibataire",
+      nombreEnfants: 0,
       ecole: "",
       filiere: "",
-      niveau: "L3",
-      dateDebut: new Date().toISOString().split('T')[0],
-      dateFin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      niveau: "Licence 3",
+      dateDebutStage: new Date().toISOString().split('T')[0],
+      dateFinStage: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      tuteur: ""
     });
     setEditingUser(null);
-    setShowForm(false);
-    setCurrentPage(1);
+    setShowModal(false);
   };
 
-  // Vérifier si le service est requis
-  const isServiceRequired = () => {
-    return form.role === "SALARIE" || form.role === "STAGIAIRE";
+  // Ouvrir le modal pour ajouter un utilisateur
+  const handleAddUser = () => {
+    resetForm();
+    setShowModal(true);
   };
 
-  // Ajouter un utilisateur
+  // Ajouter/Modifier un utilisateur - CORRECTION COMPLÈTE
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -374,13 +308,9 @@ export default function Users() {
       return;
     }
 
-    if (!form.sexe || !["Homme", "Femme"].includes(form.sexe)) {
-      alert("Veuillez sélectionner un sexe valide (Homme ou Femme)");
-      return;
-    }
-
-    if (isServiceRequired() && !form.service) {
-      alert("Veuillez sélectionner un service pour un salarié ou stagiaire");
+    // Vérification spécifique pour les salariés
+    if (form.role === "SALARIE" && !form.matricule) {
+      alert("Le matricule est obligatoire pour un salarié");
       return;
     }
 
@@ -396,49 +326,73 @@ export default function Users() {
         email: form.email,
         sexe: form.sexe,
         role: form.role,
-        password: form.motDePasse,
         dateNaissance: form.dateNaissance,
-        adresse: form.adresse
+        adresse: form.adresse,
+        telephone: form.telephone
       };
+
+      // Ajouter le mot de passe seulement si fourni
+      if (form.motDePasse) {
+        userData.password = form.motDePasse;
+      }
 
       if (form.role === "SALARIE") {
         userData.dateEmbauche = form.dateEmbauche;
-        userData.poste = form.poste || "";
-        userData.service = form.service;
+        userData.matricule = form.matricule;
+        userData.situationFamiliale = form.situationFamiliale;
+        userData.nombreEnfants = form.nombreEnfants;
       } 
       else if (form.role === "STAGIAIRE") {
-        userData.ecole = form.ecole || "École à définir";
-        userData.filiere = form.filiere || "Filière à définir";
+        userData.ecole = form.ecole;
+        userData.filiere = form.filiere;
         userData.niveau = form.niveau;
-        userData.dateDebut = form.dateDebut;
-        userData.dateFin = form.dateFin;
-        userData.service = form.service;
+        userData.dateDebutStage = form.dateDebutStage;
+        userData.dateFinStage = form.dateFinStage;
+        userData.tuteur = form.tuteur;
       }
 
       console.log("📤 Données envoyées:", userData);
 
       if (editingUser) {
-        if (!userData.password) {
-          delete userData.password;
-        }
+        // MODIFICATION - Solution robuste
         await api.put(`/users/${editingUser._id}`, userData);
+        
+        // Recharger les données fraîches depuis le backend
+        await fetchUsers();
+        
         alert("Utilisateur modifié avec succès");
       } else {
-        await api.post("/users", userData);
+        // CRÉATION
+        const response = await api.post("/users", userData);
+        setUsers(prevUsers => [...prevUsers, response.data]);
         alert("Utilisateur créé avec succès");
       }
       
       resetForm();
-      fetchUsers();
+      
     } catch (error) {
-      console.error("Erreur:", error);
-      alert(error.response?.data?.message || "Erreur lors de l'opération");
+      console.error("Erreur détaillée:", error);
+      console.error("Réponse erreur:", error.response);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          "Erreur lors de l'opération";
+      
+      if (errorMessage.includes("Matricule déjà utilisé") || errorMessage.includes("matricule")) {
+        alert("Ce matricule est déjà utilisé par un autre salarié");
+      } else if (errorMessage.includes("Email déjà utilisé") || errorMessage.includes("email")) {
+        alert("Cet email est déjà utilisé");
+      } else {
+        alert(`Erreur: ${errorMessage}`);
+      }
     }
   };
 
   // Modifier un utilisateur
   const handleEdit = (user) => {
     console.log("✏️ Modification user:", user);
+    console.log("📝 Matricule actuel:", user.matricule);
+    
     setEditingUser(user);
     setForm({
       nom: user.nom,
@@ -446,19 +400,22 @@ export default function Users() {
       email: user.email,
       sexe: user.sexe,
       role: user.role,
-      motDePasse: "",
-      service: user.service?._id || "",
-      poste: user.poste || "",
+      motDePasse: "", // Toujours vide pour la modification
       dateNaissance: user.dateNaissance ? new Date(user.dateNaissance).toISOString().split('T')[0] : "2000-01-01",
-      adresse: user.adresse || "Non spécifiée",
+      adresse: user.adresse || "",
+      telephone: user.telephone || "",
       dateEmbauche: user.dateEmbauche ? new Date(user.dateEmbauche).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      matricule: user.matricule || "",
+      situationFamiliale: user.situationFamiliale || "Célibataire",
+      nombreEnfants: user.nombreEnfants || 0,
       ecole: user.ecole || "",
       filiere: user.filiere || "",
-      niveau: user.niveau || "L3",
-      dateDebut: user.dateDebut ? new Date(user.dateDebut).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      dateFin: user.dateFin ? new Date(user.dateFin).toISOString().split('T')[0] : new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      niveau: user.niveau || "Licence 3",
+      dateDebutStage: user.dateDebutStage ? new Date(user.dateDebutStage).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      dateFinStage: user.dateFinStage ? new Date(user.dateFinStage).toISOString().split('T')[0] : new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      tuteur: user.tuteur || ""
     });
-    setShowForm(true);
+    setShowModal(true);
   };
 
   // Supprimer un utilisateur
@@ -469,8 +426,9 @@ export default function Users() {
 
     try {
       await api.delete(`/users/${user._id}`);
+      // Mettre à jour la liste localement
+      setUsers(prevUsers => prevUsers.filter(u => u._id !== user._id));
       alert("Utilisateur supprimé avec succès");
-      fetchUsers();
     } catch (error) {
       console.error("Erreur suppression:", error);
       alert("Erreur lors de la suppression");
@@ -483,741 +441,459 @@ export default function Users() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Indicateur de chargement */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-800"></div>
+              <span>Chargement...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* En-tête avec bouton d'ajout et recherche */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "20px",
-        flexWrap: "wrap",
-        gap: "15px"
-      }}>
-        <h1 style={{ margin: 0, color: "#2c3e50" }}>👥 Gestion des Utilisateurs</h1>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
         
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-          {/* Barre de recherche */}
-          <div style={{ position: "relative" }}>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
+          {/* Barre de recherche - MISE À JOUR DU PLACEHOLDER */}
+          <div className="relative">
             <input
               type="text"
-              placeholder="Rechercher un utilisateur..."
+              placeholder="Rechercher par nom, prénom, email ou matricule..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "10px 40px 10px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                width: "250px",
-                fontSize: "14px"
-              }}
+              className="pl-4 pr-10 py-2 border border-gray-300 rounded-lg w-full sm:w-80 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
             />
-            <span style={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#7f8c8d"
-            }}>
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               🔍
             </span>
           </div>
 
           {/* Bouton Ajouter */}
           <button
-            onClick={() => setShowForm(true)}
-            style={{
-              background: "#2ea760ff",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}
+            onClick={handleAddUser}
+            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            ➕ Ajouter un utilisateur
+            <span>+</span>
+            Ajouter un utilisateur
           </button>
         </div>
       </div>
 
       {/* Onglets de navigation */}
-      <div style={{
-        display: "flex",
-        background: "#f8f9fa",
-        borderRadius: "8px",
-        padding: "4px",
-        marginBottom: "20px",
-        border: "1px solid #e9ecef"
-      }}>
-        <button
-          onClick={() => setActiveTab('tous')}
-          style={{
-            flex: 1,
-            padding: "12px 16px",
-            border: "none",
-            background: activeTab === 'tous' ? "#3498db" : "transparent",
-            color: activeTab === 'tous' ? "white" : "#7f8c8d",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            transition: "all 0.3s ease"
-          }}
-        >
-          👥 Tous les utilisateurs
-          <span style={{
-            background: activeTab === 'tous' ? "rgba(255,255,255,0.2)" : "#e9ecef",
-            color: activeTab === 'tous' ? "white" : "#7f8c8d",
-            padding: "2px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "bold"
-          }}>
-            {users.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('SALARIE')}
-          style={{
-            flex: 1,
-            padding: "12px 16px",
-            border: "none",
-            background: activeTab === 'SALARIE' ? "#3498db" : "transparent",
-            color: activeTab === 'SALARIE' ? "white" : "#7f8c8d",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            transition: "all 0.3s ease"
-          }}
-        >
-          💼 Salariés
-          <span style={{
-            background: activeTab === 'SALARIE' ? "rgba(255,255,255,0.2)" : "#e9ecef",
-            color: activeTab === 'SALARIE' ? "white" : "#7f8c8d",
-            padding: "2px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "bold"
-          }}>
-            {getUserCountByRole('SALARIE')}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('STAGIAIRE')}
-          style={{
-            flex: 1,
-            padding: "12px 16px",
-            border: "none",
-            background: activeTab === 'STAGIAIRE' ? "#2ecc71" : "transparent",
-            color: activeTab === 'STAGIAIRE' ? "white" : "#7f8c8d",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            transition: "all 0.3s ease"
-          }}
-        >
-          🎓 Stagiaires
-          <span style={{
-            background: activeTab === 'STAGIAIRE' ? "rgba(255,255,255,0.2)" : "#e9ecef",
-            color: activeTab === 'STAGIAIRE' ? "white" : "#7f8c8d",
-            padding: "2px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "bold"
-          }}>
-            {getUserCountByRole('STAGIAIRE')}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('ADMIN_RH')}
-          style={{
-            flex: 1,
-            padding: "12px 16px",
-            border: "none",
-            background: activeTab === 'ADMIN_RH' ? "#e74c3c" : "transparent",
-            color: activeTab === 'ADMIN_RH' ? "white" : "#7f8c8d",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            transition: "all 0.3s ease"
-          }}
-        >
-          🔧 Admins RH
-          <span style={{
-            background: activeTab === 'ADMIN_RH' ? "rgba(255,255,255,0.2)" : "#e9ecef",
-            color: activeTab === 'ADMIN_RH' ? "white" : "#7f8c8d",
-            padding: "2px 8px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: "bold"
-          }}>
-            {getUserCountByRole('ADMIN_RH')}
-          </span>
-        </button>
+      <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap gap-1">
+          {[
+            { key: 'tous', label: 'Tous les utilisateurs', count: users.length },
+            { key: 'SALARIE', label: 'Salariés', count: getUserCountByRole('SALARIE') },
+            { key: 'STAGIAIRE', label: 'Stagiaires', count: getUserCountByRole('STAGIAIRE') },
+            { key: 'ADMIN_RH', label: 'Admins RH', count: getUserCountByRole('ADMIN_RH') }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 min-w-[150px] px-4 py-3 rounded-md transition-all ${
+                activeTab === tab.key 
+                  ? 'bg-gray-800 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              } font-medium flex items-center justify-center gap-2`}
+            >
+              {tab.label}
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === tab.key ? 'bg-white bg-opacity-20' : 'bg-gray-200'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Indicateur de filtre actif */}
       {activeTab !== 'tous' && (
-        <div style={{
-          background: "#e3f2fd",
-          border: "1px solid #bbdefb",
-          borderRadius: "6px",
-          padding: "12px 16px",
-          marginBottom: "20px",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px"
-        }}>
-          <span style={{ color: "#1976d2", fontSize: "18px" }}>🔍</span>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <span className="text-blue-600">🔍</span>
           <div>
-            <strong style={{ color: "#1976d2" }}>
+            <strong className="text-blue-800">
               Filtre actif : {activeTab === 'SALARIE' ? 'Salariés' : activeTab === 'STAGIAIRE' ? 'Stagiaires' : 'Admins RH'}
             </strong>
-            <div style={{ fontSize: "14px", color: "#546e7a", marginTop: "2px" }}>
+            <div className="text-sm text-blue-600 mt-1">
               Affichage de {filteredUsers.length} utilisateur(s) sur {users.length} au total
             </div>
           </div>
           <button
             onClick={() => setActiveTab('tous')}
-            style={{
-              marginLeft: "auto",
-              background: "none",
-              border: "1px solid #1976d2",
-              color: "#1976d2",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: "500"
-            }}
+            className="ml-auto border border-blue-600 text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-600 hover:text-white transition-colors"
           >
             ✕ Supprimer le filtre
           </button>
         </div>
       )}
 
-      {/* Formulaire d'ajout/modification */}
-      {showForm && (
-        <div style={{
-          background: "#f8f9fa",
-          padding: "25px",
-          borderRadius: "10px",
-          marginBottom: "30px",
-          border: "1px solid #e9ecef"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            {editingUser ? "✏️ Modifier l'utilisateur" : "➕ Ajouter un nouvel utilisateur"}
-          </h3>
-          
-          <form onSubmit={handleSubmit} style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "15px"
-          }}>
-            {/* Champs du formulaire */}
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Nom *</label>
-              <input
-                type="text"
-                name="nom"
-                value={form.nom}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
+      {/* Modal pour ajouter/modifier un utilisateur */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            {/* En-tête du modal */}
+            <div className="bg-gray-800 text-white px-6 py-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">
+                  {editingUser ? "Modifier l'utilisateur" : "Ajouter un nouvel utilisateur"}
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Prénom *</label>
-              <input
-                type="text"
-                name="prenom"
-                value={form.prenom}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Sexe *</label>
-              <select
-                name="sexe"
-                value={form.sexe}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  background: "white"
-                }}
-              >
-                <option value="Homme">Homme</option>
-                <option value="Femme">Femme</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date de naissance *</label>
-              <input
-                type="date"
-                name="dateNaissance"
-                value={form.dateNaissance}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Adresse *</label>
-              <input
-                type="text"
-                name="adresse"
-                value={form.adresse}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Rôle *</label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  background: "white"
-                }}
-              >
-                <option value="SALARIE">Salarié</option>
-                <option value="ADMIN_RH">Admin RH</option>
-                <option value="STAGIAIRE">Stagiaire</option>
-              </select>
-            </div>
-
-            {/* Champs spécifiques pour SALARIE */}
-            {form.role === "SALARIE" && (
-              <>
+            {/* Contenu du modal */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Champs de base */}
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date d'embauche *</label>
-                  <input
-                    type="date"
-                    name="dateEmbauche"
-                    value={form.dateEmbauche}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px"
-                    }}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Champs spécifiques pour STAGIAIRE */}
-            {form.role === "STAGIAIRE" && (
-              <>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>École *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                   <input
                     type="text"
-                    name="ecole"
-                    value={form.ecole}
+                    name="nom"
+                    value={form.nom}
                     onChange={handleInputChange}
                     required
-                    placeholder="Nom de l'école"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px"
-                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
+
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Filière *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
                   <input
                     type="text"
-                    name="filiere"
-                    value={form.filiere}
+                    name="prenom"
+                    value={form.prenom}
                     onChange={handleInputChange}
                     required
-                    placeholder="Filière d'étude"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px"
-                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                   />
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Niveau *</label>
-                  <select
-                    name="niveau"
-                    value={form.niveau}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      background: "white"
-                    }}
-                  >
-                    <option value="L1">L1</option>
-                    <option value="L2">L2</option>
-                    <option value="L3">L3</option>
-                    <option value="M1">M1</option>
-                    <option value="M2">M2</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date de début *</label>
-                  <input
-                    type="date"
-                    name="dateDebut"
-                    value={form.dateDebut}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px"
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Date de fin *</label>
-                  <input
-                    type="date"
-                    name="dateFin"
-                    value={form.dateFin}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px"
-                    }}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Sélection du service - Conditionnel */}
-            {(form.role === "SALARIE" || form.role === "STAGIAIRE") && (
-              <>
-                <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-                    Service {services.length > 0 ? "*" : "(Aucun service disponible)"}
-                  </label>
-                  <select
-                    name="service"
-                    value={form.service}
-                    onChange={handleInputChange}
-                    required={services.length > 0}
-                    disabled={services.length === 0}
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      background: services.length === 0 ? "#f5f5f5" : "white",
-                      color: services.length === 0 ? "#999" : "inherit"
-                    }}
-                  >
-                    <option value="">
-                      {services.length === 0 ? "Aucun service disponible" : "Sélectionner un service"}
-                    </option>
-                    {services.map(service => (
-                      <option key={service._id} value={service._id}>
-                        {service.nomService} {service.postes?.length > 0 ? `(${service.postes.length} postes)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {services.length === 0 && (
-                    <div style={{ fontSize: "12px", color: "#e74c3c", marginTop: "5px" }}>
-                      ⚠️ Aucun service trouvé. Vérifiez votre backend.
-                    </div>
-                  )}
                 </div>
 
-                {/* Sélection du poste - seulement pour SALARIE */}
-                {form.role === "SALARIE" && form.service && (
-                  <div>
-                    <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-                      Poste
-                    </label>
-                    <select
-                      name="poste"
-                      value={form.poste}
-                      onChange={handleInputChange}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
-                        background: "white"
-                      }}
-                    >
-                      <option value="">Sélectionner un poste (optionnel)</option>
-                      {services.find(s => s._id === form.service)?.postes?.map((poste, index) => (
-                        <option key={index} value={poste}>
-                          {poste}
-                        </option>
-                      ))}
-                    </select>
-                    <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
-                      {services.find(s => s._id === form.service)?.postes?.length || 0} poste(s) disponible(s)
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sexe *</label>
+                  <select
+                    name="sexe"
+                    value={form.sexe}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                  >
+                    <option value="Homme">Homme</option>
+                    <option value="Femme">Femme</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date de naissance *</label>
+                  <input
+                    type="date"
+                    name="dateNaissance"
+                    value={form.dateNaissance}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                  <input
+                    type="text"
+                    name="telephone"
+                    value={form.telephone}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Adresse *</label>
+                  <input
+                    type="text"
+                    name="adresse"
+                    value={form.adresse}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
+                  <select
+                    name="role"
+                    value={form.role}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                  >
+                    <option value="SALARIE">Salarié</option>
+                    <option value="ADMIN_RH">Admin RH</option>
+                    <option value="STAGIAIRE">Stagiaire</option>
+                  </select>
+                </div>
+
+                {/* Champs spécifiques pour SALARIE - MATRICULE OBLIGATOIRE */}
+                {form.role === "SALARIE" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Matricule *</label>
+                      <input
+                        type="text"
+                        name="matricule"
+                        value={form.matricule}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Ex: SAL001, EMP2024..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 font-mono"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Identifiant unique du salarié
+                      </p>
                     </div>
-                  </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date d'embauche *</label>
+                      <input
+                        type="date"
+                        name="dateEmbauche"
+                        value={form.dateEmbauche}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Situation familiale</label>
+                      <select
+                        name="situationFamiliale"
+                        value={form.situationFamiliale}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                      >
+                        <option value="Célibataire">Célibataire</option>
+                        <option value="Marié(e)">Marié(e)</option>
+                        <option value="Divorcé(e)">Divorcé(e)</option>
+                        <option value="Veuf(ve)">Veuf(ve)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre d'enfants</label>
+                      <input
+                        type="number"
+                        name="nombreEnfants"
+                        value={form.nombreEnfants}
+                        onChange={handleInputChange}
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+                  </>
                 )}
-              </>
-            )}
 
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-                Mot de passe {!editingUser && "*"}
-              </label>
-              <input
-                type="password"
-                name="motDePasse"
-                value={form.motDePasse}
-                onChange={handleInputChange}
-                required={!editingUser}
-                placeholder={editingUser ? "Laisser vide pour ne pas modifier" : ""}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
+                {/* Champs spécifiques pour STAGIAIRE */}
+                {form.role === "STAGIAIRE" && (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">École *</label>
+                      <input
+                        type="text"
+                        name="ecole"
+                        value={form.ecole}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Nom de l'école"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
 
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#3498db",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
-              >
-                {editingUser ? "Modifier" : "Créer"}
-              </button>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Filière *</label>
+                      <input
+                        type="text"
+                        name="filiere"
+                        value={form.filiere}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Filière d'étude"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Niveau *</label>
+                      <select
+                        name="niveau"
+                        value={form.niveau}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                      >
+                        <option value="Licence 1">Licence 1</option>
+                        <option value="Licence 2">Licence 2</option>
+                        <option value="Licence 3">Licence 3</option>
+                        <option value="Master 1">Master 1</option>
+                        <option value="Master 2">Master 2</option>
+                        <option value="Doctorat">Doctorat</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de début *</label>
+                      <input
+                        type="date"
+                        name="dateDebutStage"
+                        value={form.dateDebutStage}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin *</label>
+                      <input
+                        type="date"
+                        name="dateFinStage"
+                        value={form.dateFinStage}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tuteur</label>
+                      <input
+                        type="text"
+                        name="tuteur"
+                        value={form.tuteur}
+                        onChange={handleInputChange}
+                        placeholder="Nom du tuteur"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mot de passe {!editingUser && "*"}
+                  </label>
+                  <input
+                    type="password"
+                    name="motDePasse"
+                    value={form.motDePasse}
+                    onChange={handleInputChange}
+                    required={!editingUser}
+                    placeholder={editingUser ? "Laisser vide pour ne pas modifier" : ""}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                  />
+                </div>
+
+                {/* Boutons d'action */}
+                <div className="md:col-span-2 flex gap-3 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                  >
+                    {editingUser ? "Modifier" : "Créer"}
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {filteredUsers.length > 0 && (
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "15px 20px",
-          background: "#f8f9fa",
-          border: "1px solid #e9ecef",
-          borderRadius: "8px",
-          marginBottom: "20px"
-        }}>
-          <div style={{ color: "#6c757d", fontSize: "14px" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-600 text-sm">
             Affichage de {indexOfFirstUser + 1} à {Math.min(indexOfLastUser, filteredUsers.length)} sur {filteredUsers.length} utilisateur(s)
           </div>
           
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Bouton Précédent */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === 1 ? "#f8f9fa" : "white",
-                color: currentPage === 1 ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               ◀ Précédent
             </button>
 
-            {/* Numéros de page */}
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "1px solid #dee2e6",
-                    background: currentPage === page ? "#007bff" : "white",
-                    color: currentPage === page ? "white" : "#007bff",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    minWidth: "40px"
-                  }}
+                  className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
+                    currentPage === page 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
 
-            {/* Bouton Suivant */}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === totalPages ? "#f8f9fa" : "white",
-                color: currentPage === totalPages ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Suivant ▶
             </button>
           </div>
 
-          {/* Sélecteur d'éléments par page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "#6c757d" }}>Utilisateurs par page:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Utilisateurs par page:</span>
             <select
               value={usersPerPage}
-              onChange={(e) => {
-                setUsersPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #dee2e6",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
+              onChange={(e) => setCurrentPage(1)}
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -1230,37 +906,23 @@ export default function Users() {
       )}
 
       {/* Tableau des utilisateurs */}
-      <div style={{
-        background: "white",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-      }}>
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            Chargement des utilisateurs...
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
             {searchTerm || activeTab !== 'tous' 
               ? `Aucun utilisateur trouvé ${activeTab !== 'tous' ? `pour les ${activeTab === 'SALARIE' ? 'salariés' : activeTab === 'STAGIAIRE' ? 'stagiaires' : 'admins RH'}` : ''}`
               : "Aucun utilisateur enregistré"
             }
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: "#34495e", color: "white" }}>
+                <tr className="bg-gray-800 text-white">
                   {getTableHeaders().map(header => (
                     <th 
                       key={header.key}
-                      style={{ 
-                        padding: "15px", 
-                        textAlign: header.key === 'actions' ? "center" : "left", 
-                        fontSize: "14px",
-                        whiteSpace: 'nowrap'
-                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
                     >
                       {header.label}
                     </th>
@@ -1271,18 +933,12 @@ export default function Users() {
                 {currentUsers.map((user, index) => (
                   <tr 
                     key={user._id}
-                    style={{ 
-                      background: index % 2 === 0 ? "#f8f9fa" : "white",
-                      borderBottom: "1px solid #e9ecef"
-                    }}
+                    className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
                     {getTableHeaders().map(header => (
                       <td 
                         key={header.key}
-                        style={{ 
-                          padding: "15px",
-                          textAlign: header.key === 'actions' ? "center" : "left"
-                        }}
+                        className="px-4 py-3 text-sm border-t border-gray-200"
                       >
                         {renderCellContent(user, header.key)}
                       </td>
@@ -1294,78 +950,32 @@ export default function Users() {
           </div>
         )}
       </div>
-      {/* Statistiques */}
-      <div style={{
-        marginTop: "20px",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total utilisateurs</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{users.length}</div>
-        </div>
-        
-        <div style={{
-          background: "#e74c3c",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Admins RH</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {users.filter(u => u.role === "ADMIN_RH").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Salariés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {users.filter(u => u.role === "SALARIE").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#f39c12",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Stagiaires</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {users.filter(u => u.role === "STAGIAIRE").length}
-          </div>
-        </div>
 
-        <div style={{
-          background: "#2e476bff",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Avec poste défini</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {users.filter(u => u.poste).length}
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Total utilisateurs</div>
+          <div className="text-2xl font-bold text-gray-800">{users.length}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Admins RH</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {getUserCountByRole('ADMIN_RH')}
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Salariés</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {getUserCountByRole('SALARIE')}
+          </div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Stagiaires</div>
+          <div className="text-2xl font-bold text-gray-800">
+            {getUserCountByRole('STAGIAIRE')}
           </div>
         </div>
       </div>

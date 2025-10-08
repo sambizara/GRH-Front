@@ -12,48 +12,67 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem("user");
     
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      // Mettre à jour le header Authorization pour les requêtes futures
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
   }, []);
 
-  const login = async (email, motDePasse) => {
-  setLoading(true);
-  try {
-    console.log("🔄 AuthContext - Tentative de connexion...");
-    console.log("📤 Données envoyées:", { email, password: motDePasse }); // ← Changé ici
-    
-    const response = await api.post("/auth/login", {
-      email,
-      password: motDePasse, // ← ICI : motDePasse → password
-    });
+  const login = async (email, password) => { // ← CORRECTION : motDePasse → password
+    setLoading(true);
+    try {
+      console.log("🔄 AuthContext - Tentative de connexion...");
+      console.log("📤 Données envoyées:", { email, password });
+      
+      const response = await api.post("/auth/login", {
+        email,
+        password, // ← CORRECTION : utilisation du bon nom
+      });
 
-    console.log("✅ AuthContext - Réponse reçue:", response.data);
-    
-    localStorage.setItem("token", response.data.token);
-    localStorage.setItem("user", JSON.stringify(response.data.user));
-    setUser(response.data.user);
+      console.log("✅ AuthContext - Réponse reçue:", response.data);
+      
+      if (response.data.token && response.data.user) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        
+        // Mettre à jour le header Authorization
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
+        setUser(response.data.user);
 
-    return response.data;
+        return {
+          success: true,
+          token: response.data.token,
+          user: response.data.user,
+          message: "Connexion réussie"
+        };
+      } else {
+        throw new Error("Réponse du serveur invalide");
+      }
 
-  } catch (error) {
-    console.error("❌ AuthContext - Erreur attrapée:");
-    console.error("Status:", error.response?.status);
-    console.error("Data:", error.response?.data);
-    console.error("Message:", error.message);
-    
-    return {
-      token: null,
-      message: error.response?.data?.message || "Erreur de connexion au serveur",
-    };
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("❌ AuthContext - Erreur attrapée:");
+      console.error("Status:", error.response?.status);
+      console.error("Data:", error.response?.data);
+      console.error("Message:", error.message);
+      
+      return {
+        success: false,
+        token: null,
+        user: null,
+        message: error.response?.data?.message || "Erreur de connexion au serveur",
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    delete api.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
@@ -62,4 +81,13 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Ajoutez cette fonction à la fin de votre fichier AuthContext.js
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

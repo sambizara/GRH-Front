@@ -15,7 +15,7 @@ export default function Services() {
   });
   const [newPoste, setNewPoste] = useState("");
 
-  // ✅ NOUVEAU: État pour la vue détaillée
+  // État pour la vue détaillée
   const [selectedService, setSelectedService] = useState(null);
   const [showUsersModal, setShowUsersModal] = useState(false);
 
@@ -50,7 +50,7 @@ export default function Services() {
     }
   };
 
-  // ✅ AMÉLIORÉ: Obtenir les utilisateurs d'un service
+  // Obtenir les utilisateurs d'un service
   const getUsersByService = (serviceId) => {
     return users.filter(
       (user) =>
@@ -62,7 +62,7 @@ export default function Services() {
     return getUsersByService(serviceId).length;
   };
 
-  // ✅ NOUVEAU: Afficher les utilisateurs d'un service
+  // Afficher les utilisateurs d'un service
   const handleShowUsers = (service) => {
     setSelectedService(service);
     setShowUsersModal(true);
@@ -202,7 +202,7 @@ export default function Services() {
     }
   };
 
-  // ✅ NOUVEAU: Fonction pour obtenir la répartition par rôle
+  // Fonction pour obtenir la répartition par rôle
   const getRoleDistribution = (serviceUsers) => {
     const distribution = {
       SALARIE: 0,
@@ -220,77 +220,43 @@ export default function Services() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* HEADER */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "30px",
-        flexWrap: "wrap",
-        gap: "15px"
-      }}>
-        <h1 style={{ margin: 0, color: "#2c3e50" }}>🏢 Gestion des Services</h1>
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ position: "relative" }}>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">🏢 Gestion des Services</h1>
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 sm:w-64">
             <input
               type="text"
               placeholder="Rechercher un service..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ 
-                padding: "10px 40px 10px 15px", 
-                border: "1px solid #ddd", 
-                borderRadius: "6px",
-                width: "250px"
-              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
             />
-            <span style={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#7f8c8d"
-            }}>
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               🔍
             </span>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            style={{
-              background: "#27ae60",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}
+            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            ➕ Nouveau service
+            <span>+</span>
+            Nouveau service
           </button>
         </div>
       </div>
 
-      {/* FORM - Inchangé */}
+      {/* FORMULAIRE */}
       {showForm && (
-        <div style={{ 
-          background: "#f8f9fa", 
-          padding: "25px", 
-          borderRadius: "10px", 
-          marginBottom: "30px",
-          border: "1px solid #e9ecef"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            {editingService ? "✏️ Modifier le service" : "➕ Ajouter un nouveau service"}
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            {editingService ? "Modifier le service" : "Ajouter un nouveau service"}
           </h3>
 
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: "15px" }}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Nom du service *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nom du service *</label>
               <input
                 type="text"
                 name="nomService"
@@ -298,223 +264,134 @@ export default function Services() {
                 onChange={handleInputChange}
                 placeholder="Nom du service"
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px"
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
               />
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleInputChange}
                 placeholder="Description"
                 rows="3"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  resize: "vertical"
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 resize-vertical"
               />
             </div>
 
             {/* Gestion des postes */}
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Postes :</label>
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Postes :</label>
+              <div className="flex gap-3 mt-2">
                 <input
                   type="text"
                   value={newPoste}
                   onChange={(e) => setNewPoste(e.target.value)}
                   placeholder="Ajouter un poste"
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px"
-                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                 />
                 <button 
                   type="button" 
                   onClick={handleAddPoste}
-                  style={{
-                    padding: "10px 15px",
-                    background: "#3498db",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
-                  ➕ Ajouter
+                  Ajouter
                 </button>
               </div>
-              <div style={{ marginTop: "10px" }}>
+              <div className="mt-3 flex flex-wrap gap-2">
                 {form.postes.map((poste, index) => (
-                  <div key={index} style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    background: "#e3f2fd",
-                    padding: "5px 10px",
-                    borderRadius: "20px",
-                    margin: "5px 5px 5px 0",
-                    fontSize: "14px"
-                  }}>
+                  <div key={index} className="inline-flex items-center bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                     {poste}
                     <button 
                       type="button" 
                       onClick={() => handleRemovePoste(poste)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        marginLeft: "8px",
-                        color: "#e74c3c"
-                      }}
+                      className="ml-2 text-red-500 hover:text-red-700"
                     >
-                      ❌
+                      ×
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+            <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
               <button 
                 type="button" 
                 onClick={resetForm}
-                style={{
-                  padding: "10px 20px",
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
               >
                 Annuler
               </button>
               <button 
                 type="submit"
-                style={{
-                  padding: "10px 20px",
-                  background: "#3498db",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
+                className="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
               >
-                {editingService ? "💾 Modifier" : "✅ Créer"}
+                {editingService ? "Modifier" : "Créer"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Pagination - Inchangée */}
+      {/* PAGINATION */}
       {filteredServices.length > 0 && (
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "15px 20px",
-          background: "#f8f9fa",
-          border: "1px solid #e9ecef",
-          borderRadius: "8px",
-          marginBottom: "20px"
-        }}>
-          <div style={{ color: "#6c757d", fontSize: "14px" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-600 text-sm">
             Affichage de {indexOfFirstService + 1} à {Math.min(indexOfLastService, filteredServices.length)} sur {filteredServices.length} service(s)
           </div>
           
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Bouton Précédent */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === 1 ? "#f8f9fa" : "white",
-                color: currentPage === 1 ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               ◀ Précédent
             </button>
 
-            {/* Numéros de page */}
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "1px solid #dee2e6",
-                    background: currentPage === page ? "#007bff" : "white",
-                    color: currentPage === page ? "white" : "#007bff",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    minWidth: "40px"
-                  }}
+                  className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
+                    currentPage === page 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
 
-            {/* Bouton Suivant */}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === totalPages ? "#f8f9fa" : "white",
-                color: currentPage === totalPages ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Suivant ▶
             </button>
           </div>
 
-          {/* Sélecteur d'éléments par page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "#6c757d" }}>Services par page:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Services par page:</span>
             <select
               value={servicesPerPage}
               onChange={(e) => {
                 setServicesPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #dee2e6",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
             >
               <option value={3}>3</option>
               <option value={6}>6</option>
@@ -526,31 +403,26 @@ export default function Services() {
         </div>
       )}
 
-      {/* TABLE SERVICES - AMÉLIORÉE */}
-      <div style={{
-        background: "white",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-      }}>
+      {/* TABLEAU DES SERVICES */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+          <div className="text-center py-10 text-gray-500">
             Chargement des services...
           </div>
         ) : filteredServices.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
+          <div className="text-center py-10 text-gray-500">
             {searchTerm ? "Aucun service trouvé" : "Aucun service enregistré"}
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: "#34495e", color: "white" }}>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Service</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Description</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Postes</th>
-                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Utilisateurs</th>
-                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Actions</th>
+                <tr className="bg-gray-800 text-white">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Service</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Description</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Postes</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Utilisateurs</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -561,21 +433,18 @@ export default function Services() {
                   return (
                     <tr 
                       key={service._id}
-                      style={{ 
-                        background: index % 2 === 0 ? "#f8f9fa" : "white",
-                        borderBottom: "1px solid #e9ecef"
-                      }}
+                      className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                     >
-                      <td style={{ padding: "15px", fontWeight: "500" }}>
-                        <div style={{ fontWeight: "bold", fontSize: "16px", marginBottom: "5px" }}>
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-gray-900 mb-1">
                           {service.nomService}
                         </div>
-                        <div style={{ fontSize: "12px", color: "#7f8c8d" }}>
+                        <div className="text-xs text-gray-500">
                           {service.postes?.length || 0} poste(s) défini(s)
                         </div>
                       </td>
                       
-                      <td style={{ padding: "15px", color: "#7f8c8d", maxWidth: "200px" }}>
+                      <td className="px-4 py-3 text-gray-600 max-w-[200px]">
                         {service.description ? (
                           <div>
                             {service.description.length > 100 
@@ -584,64 +453,49 @@ export default function Services() {
                             }
                           </div>
                         ) : (
-                          <span style={{ fontStyle: "italic", color: "#bdc3c7" }}>
+                          <span className="italic text-gray-400">
                             Aucune description
                           </span>
                         )}
                       </td>
                       
-                      <td style={{ padding: "15px", minWidth: "200px" }}>
+                      <td className="px-4 py-3 min-w-[200px]">
                         {service.postes && service.postes.length > 0 ? (
                           <div>
-                            {service.postes.slice(0, 3).map((p, i) => (
-                              <div key={i} style={{
-                                display: "inline-block",
-                                background: "#e3f2fd",
-                                padding: "4px 8px",
-                                borderRadius: "12px",
-                                fontSize: "12px",
-                                margin: "2px",
-                                color: "#1976d2",
-                                fontWeight: "500"
-                              }}>
-                                {p}
-                              </div>
-                            ))}
+                            <div className="flex flex-wrap gap-1">
+                              {service.postes.slice(0, 3).map((p, i) => (
+                                <span key={i} className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                                  {p}
+                                </span>
+                              ))}
+                            </div>
                             {service.postes.length > 3 && (
-                              <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
+                              <div className="text-xs text-gray-500 mt-1">
                                 +{service.postes.length - 3} autre(s)
                               </div>
                             )}
                           </div>
                         ) : (
-                          <span style={{ color: "#bdc3c7", fontStyle: "italic" }}>Aucun poste défini</span>
+                          <span className="text-gray-400 italic">Aucun poste défini</span>
                         )}
                       </td>
                       
-                      <td style={{ padding: "15px", textAlign: "center" }}>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
-                          <span style={{
-                            display: "inline-block",
-                            background: "#2ecc71",
-                            color: "white",
-                            padding: "4px 12px",
-                            borderRadius: "20px",
-                            fontSize: "12px",
-                            fontWeight: "bold"
-                          }}>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
                             {serviceUsers.length}
                           </span>
                           
                           {serviceUsers.length > 0 && (
-                            <div style={{ display: "flex", gap: "4px", fontSize: "10px" }}>
+                            <div className="flex gap-2 text-xs">
                               {roleDistribution.SALARIE > 0 && (
-                                <span style={{ color: "#3498db" }}>💼{roleDistribution.SALARIE}</span>
+                                <span className="text-blue-600">💼{roleDistribution.SALARIE}</span>
                               )}
                               {roleDistribution.STAGIAIRE > 0 && (
-                                <span style={{ color: "#2ecc71" }}>🎓{roleDistribution.STAGIAIRE}</span>
+                                <span className="text-green-600">🎓{roleDistribution.STAGIAIRE}</span>
                               )}
                               {roleDistribution.ADMIN_RH > 0 && (
-                                <span style={{ color: "#e74c3c" }}>🔧{roleDistribution.ADMIN_RH}</span>
+                                <span className="text-red-600">🔧{roleDistribution.ADMIN_RH}</span>
                               )}
                             </div>
                           )}
@@ -649,58 +503,29 @@ export default function Services() {
                           {serviceUsers.length > 0 && (
                             <button
                               onClick={() => handleShowUsers(service)}
-                              style={{
-                                background: "none",
-                                border: "1px solid #3498db",
-                                color: "#3498db",
-                                padding: "2px 8px",
-                                borderRadius: "12px",
-                                cursor: "pointer",
-                                fontSize: "10px",
-                                marginTop: "2px"
-                              }}
+                              className="border border-blue-500 text-blue-500 px-2 py-1 rounded-full text-xs hover:bg-blue-50 transition-colors"
                             >
-                              👁️ Voir
+                              Voir détails
                             </button>
                           )}
                         </div>
                       </td>
                       
-                      <td style={{ padding: "15px", textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => handleEdit(service)}
-                            style={{
-                              background: "#f39c12",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
+                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                           >
-                            ✏️ Modifier
+                            <span>✏️</span>
+                            Modifier
                           </button>
                           <button
                             onClick={() => handleDelete(service)}
-                            style={{
-                              background: "#e74c3c",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
+                            className="bg-gray-200 hover:bg-red-100 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                           >
-                            🗑️ Supprimer
+                            <span>🗑️</span>
+                            Supprimer
                           </button>
                         </div>
                       </td>
@@ -713,176 +538,103 @@ export default function Services() {
         )}
       </div>
 
-      {/* ✅ NOUVEAU: Modal pour voir les utilisateurs du service */}
+      {/* MODAL UTILISATEURS */}
       {showUsersModal && selectedService && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: "white",
-            borderRadius: "10px",
-            padding: "25px",
-            width: "90%",
-            maxWidth: "800px",
-            maxHeight: "80vh",
-            overflow: "auto"
-          }}>
-            <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "20px",
-              borderBottom: "1px solid #eee",
-              paddingBottom: "15px"
-            }}>
-              <h3 style={{ margin: 0, color: "#2c3e50" }}>
-                👥 Utilisateurs du service : {selectedService.nomService}
-              </h3>
-              <button
-                onClick={() => setShowUsersModal(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  color: "#7f8c8d"
-                }}
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="bg-gray-800 text-white px-6 py-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">
+                  👥 Utilisateurs du service : {selectedService.nomService}
+                </h3>
+                <button
+                  onClick={() => setShowUsersModal(false)}
+                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-                <div style={{
-                  background: "#e3f2fd",
-                  padding: "10px 15px",
-                  borderRadius: "6px",
-                  fontSize: "14px"
-                }}>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="flex gap-4 mb-6 flex-wrap">
+                <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg text-sm">
                   <strong>Total :</strong> {getUsersCountByService(selectedService._id)} utilisateur(s)
                 </div>
-                <div style={{
-                  background: "#e8f5e9",
-                  padding: "10px 15px",
-                  borderRadius: "6px",
-                  fontSize: "14px"
-                }}>
+                <div className="bg-green-50 text-green-800 px-4 py-2 rounded-lg text-sm">
                   <strong>Postes :</strong> {selectedService.postes?.length || 0} défini(s)
                 </div>
               </div>
-            </div>
 
-            {getUsersByService(selectedService._id).length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-                Aucun utilisateur assigné à ce service
-              </div>
-            ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "#f8f9fa" }}>
-                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Nom & Prénom</th>
-                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Email</th>
-                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Rôle</th>
-                      <th style={{ padding: "12px", textAlign: "left", fontSize: "14px" }}>Poste</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getUsersByService(selectedService._id).map((user, index) => (
-                      <tr key={user._id} style={{ borderBottom: "1px solid #eee" }}>
-                        <td style={{ padding: "12px" }}>
-                          {user.nom} {user.prenom}
-                        </td>
-                        <td style={{ padding: "12px", color: "#2980b9" }}>
-                          {user.email}
-                        </td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{
-                            padding: "4px 8px",
-                            borderRadius: "12px",
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            background: 
-                              user.role === "ADMIN_RH" ? "#e74c3c" :
-                              user.role === "SALARIE" ? "#3498db" : "#2ecc71",
-                            color: "white"
-                          }}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px" }}>
-                          {user.poste || (
-                            <span style={{ color: "#bdc3c7", fontStyle: "italic" }}>Non défini</span>
-                          )}
-                        </td>
+              {getUsersByService(selectedService._id).length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                  Aucun utilisateur assigné à ce service
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nom & Prénom</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Rôle</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Poste</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {getUsersByService(selectedService._id).map((user, index) => (
+                        <tr key={user._id} className="border-b border-gray-200">
+                          <td className="px-4 py-3">
+                            {user.nom} {user.prenom}
+                          </td>
+                          <td className="px-4 py-3 text-blue-600">
+                            {user.email}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${
+                              user.role === "ADMIN_RH" ? "bg-red-500" :
+                              user.role === "SALARIE" ? "bg-blue-500" : "bg-green-500"
+                            }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {user.poste || (
+                              <span className="text-gray-400 italic">Non défini</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Statistiques - Inchangées */}
-      <div style={{
-        marginTop: "20px",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total services</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{services.length}</div>
+      {/* STATISTIQUES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Total services</div>
+          <div className="text-2xl font-bold text-gray-800">{services.length}</div>
         </div>
         
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Services avec postes</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Services avec postes</div>
+          <div className="text-2xl font-bold text-gray-800">
             {services.filter(s => s.postes && s.postes.length > 0).length}
           </div>
         </div>
         
-        <div style={{
-          background: "#f39c12",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total utilisateurs assignés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600">Total utilisateurs assignés</div>
+          <div className="text-2xl font-bold text-gray-800">
             {users.filter(u => u.service).length}
           </div>
         </div>
       </div>
-
     </div>
   );
 }

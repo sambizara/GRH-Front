@@ -1,396 +1,153 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-export default function Login() {
-  const { login, loading } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [motDePasse, setMotDePasse] = useState("");
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+const Login = () => {
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: '' // ← Assurez-vous que c'est "password" et non "motDePasse"
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    
-    console.log("=== DÉBUT handleSubmit ===");
-    console.log("Email:", email);
-    console.log("Mot de passe:", motDePasse);
-
-    if (!email || !motDePasse) {
-      console.log("❌ Champs manquants");
-      setError("Veuillez remplir tous les champs");
-      return;
-    }
+    setError('');
+    setLoading(true);
 
     try {
-      console.log("🔄 Appel de la fonction login...");
-      const result = await login(email, motDePasse);
+      console.log("🔐 Tentative de connexion avec:", credentials.email);
       
-      console.log("📦 Résultat reçu dans handleSubmit:", result);
-      console.log("Token dans le résultat:", result?.token);
-      console.log ("User dans le résultat:", result?.user);
+      // Appel via AuthContext
+      const result = await login(credentials.email, credentials.password);
 
-      // Vérification corrigée
-      if (result && result.token) {
-        console.log("✅ Connexion réussie, redirection...");
-        console.log("Role de l'utilisateur:", result.user.role);
+      if (result.success) {
+        console.log("✅ Connexion réussie via AuthContext");
         
-        const role = result.user.role;
-        switch (role) {
-          case "ADMIN_RH":
-            console.log("➡️ Redirection vers /admin/users");
-            navigate("/admin/users");
-            break;
-          case "SALARIE":
-            console.log("➡️ Redirection vers /salarie/profil");
-            navigate("/salarie/profil");
-            break;
-          case "STAGIAIRE":
-            console.log("➡️ Redirection vers /stagiaire/profil");
-            navigate("/stagiaire/profil");
-            break;
-          default:
-            console.log("➡️ Redirection vers / (default)");
-            navigate("/");
-        }
+        // Redirection basée sur le rôle
+        const redirectPaths = {
+          'ADMIN_RH': '/admin/dashboard',
+          'SALARIE': '/salarie/dashboard', 
+          'STAGIAIRE': '/stagiaire/dashboard'
+        };
+        
+        const redirectPath = redirectPaths[result.user.role] || '/dashboard';
+        console.log("🔄 Redirection vers:", redirectPath);
+        navigate(redirectPath);
+        
       } else {
-        console.log("❌ Échec de connexion - Message:", result?.message);
-        setError(result?.message || "Email ou mot de passe incorrect");
+        throw new Error(result.message);
       }
-    } catch (err) {
-      console.error('💥 Erreur attrapée dans handleSubmit:', err);
-      console.error('Message d\'erreur:', err.message);
-      console.error('Stack:', err.stack);
-      setError("Erreur lors de la connexion");
-    }
-    
-    console.log("=== FIN handleSubmit ===");
-  };
 
-  const handleDemoLogin = (role) => {
-    console.log("🔄 Clic sur compte démo:", role);
-    
-    const demoAccounts = {
-      ADMIN_RH: { email: "admin@grh.com", password: "admin123" },
-      SALARIE: { email: "salarie@grh.com", password: "salarie123" },
-      STAGIAIRE: { email: "stagiaire@grh.com", password: "stagiaire123" }
-    };
-    
-    const account = demoAccounts[role];
-    if (account) {
-      console.log("📝 Remplissage des champs avec:", account);
-      setEmail(account.email);
-      setMotDePasse(account.password);
-      
-      // Optionnel : connexion automatique après un court délai
-      setTimeout(() => {
-        console.log("🔄 Connexion automatique après remplissage...");
-        const submitEvent = new Event('submit', { cancelable: true });
-        const form = document.querySelector('form');
-        if (form) {
-          form.dispatchEvent(submitEvent);
-        }
-      }, 100);
+    } catch (error) {
+      console.error("❌ Erreur de connexion:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Styles
-  const styles = {
-    container: {
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-      padding: "20px",
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-    },
-    card: {
-      maxWidth: "400px",
-      width: "100%",
-      background: "white",
-      padding: "40px 30px",
-      borderRadius: "16px",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-      border: "1px solid #e1e5e9"
-    },
-    header: { 
-      textAlign: "center", 
-      marginBottom: "30px" 
-    },
-    logo: {
-      margin: "0 auto 15px auto",
-      width: "60px",
-      height: "60px",
-      background: "#3b82f6",
-      borderRadius: "50%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "white",
-      fontSize: "20px",
-      fontWeight: "bold"
-    },
-    title: { 
-      fontSize: "28px", 
-      fontWeight: "700", 
-      color: "#1f2937", 
-      marginBottom: "8px" 
-    },
-    subtitle: { 
-      fontSize: "14px", 
-      color: "#6b7280" 
-    },
-    error: {
-      background: "#fef2f2",
-      border: "1px solid #fecaca",
-      color: "#dc2626",
-      padding: "12px 16px",
-      borderRadius: "8px",
-      marginBottom: "20px",
-      display: "flex",
-      alignItems: "center",
-      fontSize: "14px"
-    },
-    formGroup: { 
-      marginBottom: "20px" 
-    },
-    label: { 
-      display: "block", 
-      fontSize: "14px", 
-      fontWeight: "500", 
-      color: "#374151", 
-      marginBottom: "6px" 
-    },
-    inputContainer: { 
-      position: "relative" 
-    },
-    input: {
-      width: "100%",
-      padding: "12px 16px",
-      border: "1px solid #d1d5db",
-      borderRadius: "8px",
-      fontSize: "14px",
-      outline: "none",
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
-      backgroundColor: loading ? "#f9fafb" : "white"
-    },
-    inputFocus: { 
-      borderColor: "#3b82f6", 
-      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)" 
-    },
-    passwordToggle: { 
-      position: "absolute", 
-      right: "12px", 
-      top: "50%", 
-      transform: "translateY(-50%)", 
-      background: "none", 
-      border: "none", 
-      color: "#6b7280", 
-      cursor: "pointer", 
-      padding: "4px",
-      fontSize: "16px"
-    },
-    submitButton: { 
-      width: "100%", 
-      padding: "14px", 
-      background: "#3b82f6", 
-      color: "white", 
-      border: "none", 
-      borderRadius: "8px", 
-      fontSize: "16px", 
-      fontWeight: "600", 
-      cursor: "pointer", 
-      transition: "all 0.2s ease", 
-      display: "flex", 
-      alignItems: "center", 
-      justifyContent: "center" 
-    },
-    submitButtonHover: { 
-      background: "#2563eb" 
-    },
-    submitButtonDisabled: { 
-      opacity: "0.6", 
-      cursor: "not-allowed" 
-    },
-    demoSection: { 
-      marginTop: "25px", 
-      paddingTop: "25px", 
-      borderTop: "1px solid #e5e7eb" 
-    },
-    demoTitle: { 
-      textAlign: "center", 
-      fontSize: "12px", 
-      color: "#6b7280", 
-      marginBottom: "12px", 
-      textTransform: "uppercase", 
-      letterSpacing: "0.5px" 
-    },
-    demoButtons: { 
-      display: "grid", 
-      gridTemplateColumns: "1fr 1fr 1fr", 
-      gap: "8px" 
-    },
-    demoButton: { 
-      padding: "8px 6px", 
-      fontSize: "11px", 
-      fontWeight: "500", 
-      border: "none", 
-      borderRadius: "6px", 
-      cursor: "pointer", 
-      transition: "all 0.2s ease" 
-    },
-    footer: { 
-      marginTop: "25px", 
-      textAlign: "center" 
-    },
-    footerText: { 
-      fontSize: "11px", 
-      color: "#9ca3af" 
-    }
-  };
-
-  console.log("🔄 Rendu du composant Login");
-  console.log("État actuel - Email:", email, "Loading:", loading, "Error:", error);
-
+  // ... le reste de votre code Login.js reste identique
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.logo}>GRH</div>
-          <h1 style={styles.title}>Connexion</h1>
-          <p style={styles.subtitle}>Système de Gestion des Ressources Humaines</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-blue-600 p-6 text-center">
+          <h1 className="text-2xl font-bold text-white">GRH System</h1>
+          <p className="text-blue-100 mt-2">Connexion à votre espace</p>
         </div>
-
-        {error && (
-          <div style={styles.error}>
-            <svg style={{ width: "16px", height: "16px", marginRight: "8px", flexShrink: "0" }} fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Adresse email
-            </label>
-            <div style={styles.inputContainer}>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={styles.input}
-                placeholder="votre@email.com"
-                disabled={loading}
-                onFocus={(e) => {
-                  e.target.style.borderColor = styles.inputFocus.borderColor;
-                  e.target.style.boxShadow = styles.inputFocus.boxShadow;
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = styles.input.border;
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
+        
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </div>
             </div>
+          )}
+          
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="votre@email.com"
+              value={credentials.email}
+              onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+              required
+              disabled={loading}
+            />
           </div>
-
-          <div style={styles.formGroup}>
-            <label htmlFor="motDePasse" style={styles.label}>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Mot de passe
             </label>
-            <div style={styles.inputContainer}>
-              <input
-                id="motDePasse"
-                name="motDePasse"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={motDePasse}
-                onChange={(e) => setMotDePasse(e.target.value)}
-                style={styles.input}
-                placeholder="Votre mot de passe"
-                disabled={loading}
-                onFocus={(e) => {
-                  e.target.style.borderColor = styles.inputFocus.borderColor;
-                  e.target.style.boxShadow = styles.inputFocus.boxShadow;
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = styles.input.border;
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-              <button 
-                type="button" 
-                style={styles.passwordToggle} 
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-            </div>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="Votre mot de passe"
+              value={credentials.password}
+              onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+              required
+              disabled={loading}
+            />
           </div>
-
+          
           <button
             type="submit"
             disabled={loading}
-            style={{
-              ...styles.submitButton,
-              ...(loading ? styles.submitButtonDisabled : {})
-            }}
-            onMouseOver={(e) => { 
-              if (!loading) e.target.style.background = styles.submitButtonHover.background; 
-            }}
-            onMouseOut={(e) => { 
-              if (!loading) e.target.style.background = styles.submitButton.background; 
-            }}
+            className={`w-full text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              loading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
-            {loading ? "Connexion en cours..." : "Se connecter"}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Connexion en cours...
+              </div>
+            ) : (
+              'Se connecter'
+            )}
           </button>
         </form>
-
-        <div style={styles.demoSection}>
-          <p style={styles.demoTitle}>Comptes de démonstration</p>
-          <div style={styles.demoButtons}>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin("ADMIN_RH")} 
-              style={{ ...styles.demoButton, background: "#ede9fe", color: "#7c3aed" }}
-              disabled={loading}
-            >
-              Admin RH
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin("SALARIE")} 
-              style={{ ...styles.demoButton, background: "#dbeafe", color: "#1d4ed8" }}
-              disabled={loading}
-            >
-              Salarié
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin("STAGIAIRE")} 
-              style={{ ...styles.demoButton, background: "#dcfce7", color: "#166534" }}
-              disabled={loading}
-            >
-              Stagiaire
-            </button>
+        
+        {/* Section de test pour le développement */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-gray-50 px-8 py-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-3 text-center font-medium">
+              Comptes de test (Développement)
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                onClick={() => setCredentials({ email: 'rhadmin@gmail.com', password: 'Admin123!' })}
+                className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded transition-colors border border-blue-200"
+              >
+                👑 Admin RH (rhadmin@gmail.com)
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              ⚠️ Utilisez le mot de passe réel de votre base de données
+            </p>
           </div>
-        </div>
-
-        <div style={styles.footer}>
-          <p style={styles.footerText}>© 2025 GRH System. Tous droits réservés.</p>
-        </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default Login;

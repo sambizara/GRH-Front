@@ -1,48 +1,23 @@
-import React from "react";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
-import { Outlet } from "react-router-dom";
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
-export default function LayoutSalarie() {
+const LayoutSalarie = () => {
+  const { user, logout } = useAuth();
+
   return (
-      <div style={{ 
-        display: "flex",
-        minHeight: "100vh",
-        width: "100%"
-      }}>
-        {/* Sidebar avec z-index bas */}
-        <div style={{
-          position: "relative",
-          zIndex: 10
-        }}>
-          <Sidebar />
-        </div>
-        
-        {/* Contenu principal */}
-        <div style={{
-          flex: "1",
-          display: "flex",
-          flexDirection: "column",
-          minWidth: 0 // ← Important pour le responsive
-        }}>
-          {/* Navbar avec z-index élevé */}
-          <div style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 1000 // ← z-index élevé
-          }}>
-            <Navbar />
-          </div>
-          
-          {/* Contenu de la page */}
-          <main style={{ 
-            padding: "20px",
-            flex: "1",
-            overflow: "auto"
-          }}>
-            <Outlet />
-          </main>
-        </div>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar userRole={user?.role} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Navbar user={user} onLogout={logout} />
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       </div>
-    );
-}
+    </div>
+  );
+};
+
+export default LayoutSalarie;
