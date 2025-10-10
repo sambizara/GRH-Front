@@ -3,6 +3,7 @@ import api from "../../api/axiosConfig";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [postes, setPostes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState(null);
@@ -30,19 +31,43 @@ export default function Users() {
     ecole: "",
     filiere: "",
     niveau: "Licence 3",
-    dateDebutStage: new Date().toISOString().split('T')[0],
-    dateFinStage: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    tuteur: ""
+    dureeStage: 6,
+    poste: ""
   });
 
-  // Filtrer les utilisateurs - AJOUT DE LA RECHERCHE PAR MATRICULE
+  // ✅ SÉCURISATION : Toujours utiliser un tableau
+  const safeUsers = Array.isArray(users) ? users : [];
+
+  // Charger les services et postes
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const response = await api.get("/services");
+      
+      // Extraire tous les postes uniques de tous les services
+      const tousLesPostes = response.data.flatMap(service => service.postes || []);
+      const postesUniques = [...new Set(tousLesPostes)].sort();
+      setPostes(postesUniques);
+      
+      console.log("📋 Postes disponibles:", postesUniques);
+    } catch (error) {
+      console.error("Erreur chargement des services:", error);
+      setPostes([]);
+    }
+  };
+
+  // Filtrer les utilisateurs - UTILISER safeUsers
   const getFilteredUsers = () => {
-    let filtered = users.filter(user =>
+    let filtered = safeUsers.filter(user =>
       user.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.matricule && user.matricule.toLowerCase().includes(searchTerm.toLowerCase())) // Recherche par matricule
+      (user.matricule && user.matricule.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.poste && user.poste.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (activeTab !== 'tous') {
@@ -73,7 +98,8 @@ export default function Users() {
     if (activeTab === 'tous') {
       return [
         ...baseHeaders,
-        { key: 'matricule', label: 'Matricule' }, // Ajout du matricule pour tous
+        { key: 'matricule', label: 'Matricule' },
+        { key: 'poste', label: 'Poste' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -96,8 +122,8 @@ export default function Users() {
         { key: 'ecole', label: 'École' },
         { key: 'filiere', label: 'Filière' },
         { key: 'niveau', label: 'Niveau' },
-        { key: 'dateDebutStage', label: 'Début stage' },
-        { key: 'dateFinStage', label: 'Fin stage' },
+        { key: 'dureeStage', label: 'Durée (mois)' },
+        { key: 'poste', label: 'Poste' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -114,7 +140,7 @@ export default function Users() {
     return baseHeaders;
   };
 
-  // Fonction pour afficher le contenu des cellules - AJOUT DU MATRICULE
+  // Fonction pour afficher le contenu des cellules
   const renderCellContent = (user, columnKey) => {
     switch (columnKey) {
       case 'nom':
@@ -179,18 +205,18 @@ export default function Users() {
           </span>
         ) : "-";
 
-      case 'dateDebutStage':
-        return user.dateDebutStage ? (
-          <div className="text-sm text-gray-600">
-            {new Date(user.dateDebutStage).toLocaleDateString('fr-FR')}
-          </div>
+      case 'dureeStage':
+        return user.dureeStage ? (
+          <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm font-bold border border-blue-200">
+            {user.dureeStage} mois
+          </span>
         ) : "-";
 
-      case 'dateFinStage':
-        return user.dateFinStage ? (
-          <div className="text-sm text-gray-600">
-            {new Date(user.dateFinStage).toLocaleDateString('fr-FR')}
-          </div>
+      case 'poste':
+        return user.poste ? (
+          <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-medium border border-green-200">
+            {user.poste}
+          </span>
         ) : "-";
 
       case 'dateCreation':
@@ -242,7 +268,7 @@ export default function Users() {
     setCurrentPage(pageNumber);
   };
 
-  // Charger les utilisateurs
+  // Charger les utilisateurs - CORRIGÉ
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -251,10 +277,25 @@ export default function Users() {
     try {
       setLoading(true);
       const response = await api.get("/users");
-      setUsers(response.data);
+      
+      // ✅ CORRECTION : Gérer les deux formats de réponse
+      console.log("📊 Réponse API users:", response.data);
+      
+      if (response.data.success && Array.isArray(response.data.users)) {
+        // Nouvelle structure : { success: true, users: [...] }
+        setUsers(response.data.users);
+      } else if (Array.isArray(response.data)) {
+        // Ancienne structure : [...]
+        setUsers(response.data);
+      } else {
+        // Structure inattendue
+        console.error("❌ Format de données inattendu:", response.data);
+        setUsers([]);
+      }
     } catch (error) {
       console.error("Erreur chargement utilisateurs:", error);
       alert("Erreur lors du chargement des utilisateurs");
+      setUsers([]); // ✅ Toujours définir un tableau vide en cas d'erreur
     } finally {
       setLoading(false);
     }
@@ -285,9 +326,8 @@ export default function Users() {
       ecole: "",
       filiere: "",
       niveau: "Licence 3",
-      dateDebutStage: new Date().toISOString().split('T')[0],
-      dateFinStage: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      tuteur: ""
+      dureeStage: 6,
+      poste: ""
     });
     setEditingUser(null);
     setShowModal(false);
@@ -299,7 +339,7 @@ export default function Users() {
     setShowModal(true);
   };
 
-  // Ajouter/Modifier un utilisateur - VERSION CORRIGÉE
+  // Ajouter/Modifier un utilisateur
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -311,6 +351,12 @@ export default function Users() {
     // Vérification spécifique pour les salariés
     if (form.role === "SALARIE" && !form.matricule) {
       alert("Le matricule est obligatoire pour un salarié");
+      return;
+    }
+
+    // Vérification spécifique pour les stagiaires
+    if (form.role === "STAGIAIRE" && (!form.dureeStage || !form.poste)) {
+      alert("La durée du stage et le poste sont obligatoires pour un stagiaire");
       return;
     }
 
@@ -341,48 +387,38 @@ export default function Users() {
         userData.matricule = form.matricule;
         userData.situationFamiliale = form.situationFamiliale;
         userData.nombreEnfants = form.nombreEnfants;
+        userData.poste = form.poste; // ✅ Ajout du poste pour salarié
       } 
       else if (form.role === "STAGIAIRE") {
         userData.ecole = form.ecole;
         userData.filiere = form.filiere;
         userData.niveau = form.niveau;
-        userData.dateDebutStage = form.dateDebutStage;
-        userData.dateFinStage = form.dateFinStage;
-        userData.tuteur = form.tuteur;
+        userData.dureeStage = parseInt(form.dureeStage);
+        userData.poste = form.poste;
       }
 
       console.log("📤 Données envoyées:", userData);
 
       if (editingUser) {
-        // MODIFICATION - Version corrigée avec meilleure gestion d'erreur
-        try {
-          await api.put(`/users/${editingUser._id}`, userData);
-          
-          // Recharger les données fraîches depuis le backend
-          await fetchUsers();
-          
-          alert("Utilisateur modifié avec succès");
-          resetForm();
-        } catch (error) {
-          console.error("Erreur détaillée modification:", error);
-          
-          const errorMessage = error.response?.data?.message || 
-                              error.response?.data?.error || 
-                              "Erreur lors de la modification";
-          
-          if (errorMessage.includes("matricule") || errorMessage.includes("Matricule")) {
-            alert("Erreur: Ce matricule est déjà utilisé par un autre salarié");
-          } else if (errorMessage.includes("email") || errorMessage.includes("Email")) {
-            alert("Erreur: Cet email est déjà utilisé");
-          } else {
-            alert(`Erreur lors de la modification: ${errorMessage}`);
-          }
-          // Ne pas resetForm en cas d'erreur pour permettre à l'utilisateur de corriger
-        }
+        await api.put(`/users/${editingUser._id}`, userData);
+        
+        // Recharger les données fraîches depuis le backend
+        await fetchUsers();
+        
+        alert("Utilisateur modifié avec succès");
+        resetForm();
       } else {
-        // CRÉATION
         const response = await api.post("/users", userData);
-        setUsers(prevUsers => [...prevUsers, response.data.user]);
+        
+        // ✅ CORRECTION : Gérer la nouvelle structure de réponse
+        if (response.data.success) {
+          // Nouvelle structure
+          setUsers(prevUsers => [...prevUsers, response.data.user]);
+        } else {
+          // Ancienne structure
+          setUsers(prevUsers => [...prevUsers, response.data]);
+        }
+        
         alert("Utilisateur créé avec succès");
         resetForm();
       }
@@ -399,6 +435,8 @@ export default function Users() {
         alert("Ce matricule est déjà utilisé par un autre salarié");
       } else if (errorMessage.includes("Email déjà utilisé") || errorMessage.includes("email")) {
         alert("Cet email est déjà utilisé");
+      } else if (errorMessage.includes("poste") || errorMessage.includes("Poste")) {
+        alert(`Erreur: ${errorMessage}`);
       } else {
         alert(`Erreur: ${errorMessage}`);
       }
@@ -408,10 +446,6 @@ export default function Users() {
   // Modifier un utilisateur
   const handleEdit = (user) => {
     console.log("✏️ Modification user:", user);
-    console.log("📝 Matricule actuel:", user.matricule);
-    console.log("📅 Date embauche actuelle:", user.dateEmbauche);
-    console.log("🎓 Filière actuelle:", user.filiere);
-    console.log("📅 Date fin stage actuelle:", user.dateFinStage);
     
     setEditingUser(user);
     setForm({
@@ -431,9 +465,8 @@ export default function Users() {
       ecole: user.ecole || "",
       filiere: user.filiere || "",
       niveau: user.niveau || "Licence 3",
-      dateDebutStage: user.dateDebutStage ? new Date(user.dateDebutStage).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      dateFinStage: user.dateFinStage ? new Date(user.dateFinStage).toISOString().split('T')[0] : new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      tuteur: user.tuteur || ""
+      dureeStage: user.dureeStage || 6,
+      poste: user.poste || ""
     });
     setShowModal(true);
   };
@@ -455,9 +488,9 @@ export default function Users() {
     }
   };
 
-  // Obtenir le nombre d'utilisateurs par rôle
+  // Obtenir le nombre d'utilisateurs par rôle - UTILISER safeUsers
   const getUserCountByRole = (role) => {
-    return users.filter(user => user.role === role).length;
+    return safeUsers.filter(user => user.role === role).length;
   };
 
   return (
@@ -479,11 +512,11 @@ export default function Users() {
         <h1 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
-          {/* Barre de recherche - MISE À JOUR DU PLACEHOLDER */}
+          {/* Barre de recherche */}
           <div className="relative">
             <input
               type="text"
-              placeholder="Rechercher par nom, prénom, email ou matricule..."
+              placeholder="Rechercher par nom, prénom, email, matricule ou poste..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-4 pr-10 py-2 border border-gray-300 rounded-lg w-full sm:w-80 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
@@ -508,7 +541,7 @@ export default function Users() {
       <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
         <div className="flex flex-wrap gap-1">
           {[
-            { key: 'tous', label: 'Tous les utilisateurs', count: users.length },
+            { key: 'tous', label: 'Tous les utilisateurs', count: safeUsers.length }, // ✅ safeUsers
             { key: 'SALARIE', label: 'Salariés', count: getUserCountByRole('SALARIE') },
             { key: 'STAGIAIRE', label: 'Stagiaires', count: getUserCountByRole('STAGIAIRE') },
             { key: 'ADMIN_RH', label: 'Admins RH', count: getUserCountByRole('ADMIN_RH') }
@@ -542,7 +575,7 @@ export default function Users() {
               Filtre actif : {activeTab === 'SALARIE' ? 'Salariés' : activeTab === 'STAGIAIRE' ? 'Stagiaires' : 'Admins RH'}
             </strong>
             <div className="text-sm text-blue-600 mt-1">
-              Affichage de {filteredUsers.length} utilisateur(s) sur {users.length} au total
+              Affichage de {filteredUsers.length} utilisateur(s) sur {safeUsers.length} au total {/* ✅ safeUsers */}
             </div>
           </div>
           <button
@@ -677,7 +710,7 @@ export default function Users() {
                   </select>
                 </div>
 
-                {/* Champs spécifiques pour SALARIE - MATRICULE OBLIGATOIRE */}
+                {/* Champs spécifiques pour SALARIE */}
                 {form.role === "SALARIE" && (
                   <>
                     <div>
@@ -734,6 +767,31 @@ export default function Users() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                       />
                     </div>
+
+                    {/* Poste pour salarié */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste</label>
+                      <select
+                        name="poste"
+                        value={form.poste}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                      >
+                        <option value="">Sélectionner un poste (optionnel)</option>
+                        {postes.length > 0 ? (
+                          postes.map((poste, index) => (
+                            <option key={index} value={poste}>
+                              {poste}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>Aucun poste disponible</option>
+                        )}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Le poste permet de matcher automatiquement avec les stagiaires
+                      </p>
+                    </div>
                   </>
                 )}
 
@@ -785,39 +843,49 @@ export default function Users() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de début *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Durée du stage (mois) *</label>
                       <input
-                        type="date"
-                        name="dateDebutStage"
-                        value={form.dateDebutStage}
+                        type="number"
+                        name="dureeStage"
+                        value={form.dureeStage}
                         onChange={handleInputChange}
                         required
+                        min="1"
+                        max="24"
+                        placeholder="6"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin *</label>
-                      <input
-                        type="date"
-                        name="dateFinStage"
-                        value={form.dateFinStage}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-                      />
-                    </div>
-
+                    {/* Sélection du poste parmi ceux existants */}
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tuteur</label>
-                      <input
-                        type="text"
-                        name="tuteur"
-                        value={form.tuteur}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste *</label>
+                      <select
+                        name="poste"
+                        value={form.poste}
                         onChange={handleInputChange}
-                        placeholder="Nom du tuteur"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-                      />
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                      >
+                        <option value="">Sélectionner un poste</option>
+                        {postes.length > 0 ? (
+                          postes.map((poste, index) => (
+                            <option key={index} value={poste}>
+                              {poste}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>Aucun poste disponible</option>
+                        )}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {postes.length} poste(s) disponible(s) dans les services
+                      </p>
+                      {postes.length === 0 && (
+                        <p className="text-xs text-red-500 mt-1">
+                          ⚠️ Aucun poste disponible. Veuillez d'abord créer des services avec des postes.
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
@@ -975,7 +1043,7 @@ export default function Users() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
           <div className="text-sm text-gray-600">Total utilisateurs</div>
-          <div className="text-2xl font-bold text-gray-800">{users.length}</div>
+          <div className="text-2xl font-bold text-gray-800">{safeUsers.length}</div> {/* ✅ safeUsers */}
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">

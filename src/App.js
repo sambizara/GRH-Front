@@ -25,7 +25,7 @@ import Stages from "./pages/admin/Stage";
 // Pages SALARIE
 import ProfilSalarie from "./pages/salarie/Profil";
 import MesConges from "./pages/salarie/MesConges";
-import MesPresences from "./pages/salarie/MesPresences";
+import MesStagesEncadres from "./pages/salarie/MesStagesEncadres";
 import MesAttestations from "./pages/salarie/MesAttestations";
 import MesContrats from "./pages/salarie/MesContrats";
 
@@ -76,7 +76,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="profil" element={<ProfilSalarie />} />
             <Route path="conges" element={<MesConges />} />
-            <Route path="presence" element={<MesPresences />} />
+            <Route path="messtagesencadres" element={<MesStagesEncadres />} />
             <Route path="attestations" element={<MesAttestations />} />
             <Route path="contrats" element={<MesContrats />} />
           </Route>

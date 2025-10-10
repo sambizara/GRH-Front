@@ -5,7 +5,7 @@ export default function MesConges() {
   const [conges, setConges] = useState([]);
   const [soldes, setSoldes] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // ⭐ CORRECTION: Variable utilisée maintenant
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('demande');
   const [form, setForm] = useState({
     typeConge: "",
@@ -31,7 +31,7 @@ export default function MesConges() {
         throw new Error(res.data.message || "Erreur de chargement");
       }
       
-    } catch (err) { // ⭐ CORRECTION: Renommé en 'err' pour éviter conflit
+    } catch (err) {
       console.error("❌ Erreur chargement congés:", err);
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -39,7 +39,6 @@ export default function MesConges() {
     }
   }, []);
 
-  // ⭐ CORRECTION: Fonction fetchSoldes définie
   const fetchSoldes = useCallback(async () => {
     try {
       console.log("🔄 Chargement des soldes...");
@@ -53,7 +52,7 @@ export default function MesConges() {
 
   useEffect(() => { 
     fetchConges();
-    fetchSoldes(); // ⭐ CORRECTION: Fonction maintenant définie
+    fetchSoldes();
   }, [fetchConges, fetchSoldes]);
 
   const handleInputChange = (e) => {
@@ -74,7 +73,6 @@ export default function MesConges() {
   const demanderConge = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (!form.typeConge || !form.dateDebut || !form.dateFin) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
@@ -92,7 +90,6 @@ export default function MesConges() {
       await api.post("/conges", form);
       alert("✅ Demande de congé envoyée avec succès");
       
-      // Réinitialiser le formulaire
       setForm({
         typeConge: "",
         dateDebut: "",
@@ -100,9 +97,8 @@ export default function MesConges() {
         motif: ""
       });
       
-      // Recharger la liste et les soldes
       fetchConges();
-      fetchSoldes(); // ⭐ CORRECTION: Recharger les soldes après demande
+      fetchSoldes();
     } catch (err) {
       console.error("❌ Erreur demande congé:", err);
       alert(err.response?.data?.message || "Erreur lors de la demande de congé");
@@ -111,51 +107,42 @@ export default function MesConges() {
 
   const getStatutColor = (statut) => {
     switch(statut) {
-      case 'Approuvé': return '#2ecc71';
-      case 'Rejeté': return '#e74c3c';
-      case 'En Attente': return '#f39c12';
-      default: return '#7f8c8d';
+      case 'Approuvé': return 'bg-green-500 text-white';
+      case 'Rejeté': return 'bg-red-500 text-white';
+      case 'En Attente': return 'bg-yellow-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
   const getTypeCongeColor = (type) => {
     switch(type) {
-      case 'Annuel': return '#3498db';
-      case 'Maladie': return '#9b59b6';
-      case 'Sans Solde': return '#e67e22';
-      case 'Maternité': return '#e84393';
-      case 'Paternité': return '#0984e3';
-      default: return '#7f8c8d';
+      case 'Annuel': return 'bg-blue-500 text-white';
+      case 'Maladie': return 'bg-purple-500 text-white';
+      case 'Sans Solde': return 'bg-orange-500 text-white';
+      case 'Maternité': return 'bg-pink-500 text-white';
+      case 'Paternité': return 'bg-blue-600 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
   const getSoldeColor = (restant, initial) => {
     const pourcentage = (restant / initial) * 100;
-    if (pourcentage > 50) return '#2ecc71';
-    if (pourcentage > 25) return '#f39c12';
-    return '#e74c3c';
+    if (pourcentage > 50) return 'text-green-500';
+    if (pourcentage > 25) return 'text-yellow-500';
+    return 'text-red-500';
   };
 
-  // ⭐ CORRECTION: Affichage de l'erreur si elle existe
   if (error) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "#e74c3c" }}>
-        <h2>❌ Erreur</h2>
-        <p>{error}</p>
+      <div className="p-5 text-center text-red-500">
+        <h2 className="text-2xl font-bold mb-4">❌ Erreur</h2>
+        <p className="mb-4">{error}</p>
         <button 
           onClick={() => {
             setError(null);
             fetchConges();
           }}
-          style={{
-            background: "#3498db",
-            color: "white",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            marginTop: "10px"
-          }}
+          className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
         >
           🔄 Réessayer
         </button>
@@ -164,43 +151,28 @@ export default function MesConges() {
   }
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1 style={{ color: "#2c3e50", marginBottom: "30px" }}>📅 Gestion des Congés</h1>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">📅 Gestion des Congés</h1>
 
       {/* Navigation par onglets */}
-      <div style={{ 
-        display: "flex", 
-        gap: "10px", 
-        marginBottom: "30px",
-        borderBottom: "1px solid #e9ecef"
-      }}>
+      <div className="flex gap-4 mb-8 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('demande')}
-          style={{
-            background: activeTab === 'demande' ? '#3498db' : 'transparent',
-            color: activeTab === 'demande' ? 'white' : '#7f8c8d',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '6px 6px 0 0',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'demande' ? 'bold' : 'normal',
-            transition: 'all 0.3s ease'
-          }}
+          className={`px-6 py-3 rounded-t-lg font-medium transition-all ${
+            activeTab === 'demande' 
+              ? 'bg-blue-500 text-white' 
+              : 'bg-transparent text-gray-500 hover:text-gray-700'
+          }`}
         >
           📨 Demander un congé
         </button>
         <button
           onClick={() => setActiveTab('soldes')}
-          style={{
-            background: activeTab === 'soldes' ? '#3498db' : 'transparent',
-            color: activeTab === 'soldes' ? 'white' : '#7f8c8d',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '6px 6px 0 0',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'soldes' ? 'bold' : 'normal',
-            transition: 'all 0.3s ease'
-          }}
+          className={`px-6 py-3 rounded-t-lg font-medium transition-all ${
+            activeTab === 'soldes' 
+              ? 'bg-blue-500 text-white' 
+              : 'bg-transparent text-gray-500 hover:text-gray-700'
+          }`}
         >
           💰 Mes soldes
         </button>
@@ -211,56 +183,54 @@ export default function MesConges() {
         <>
           {/* Carte des soldes rapides */}
           {soldes && (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "15px",
-              marginBottom: "30px"
-            }}>
-              <div style={{
-                background: "#e3f2fd",
-                padding: "15px",
-                borderRadius: "8px",
-                border: "1px solid #bbdefb"
-              }}>
-                <div style={{ fontSize: "12px", color: "#1976d2", marginBottom: "5px" }}>Congés Annuels</div>
-                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1976d2" }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="text-sm text-blue-600 mb-2">Congés Annuels</div>
+                <div className="text-2xl font-bold text-blue-600">
                   {soldes.annuel || 0} jours
                 </div>
+                <div className="text-xs text-blue-500 mt-1">
+                  {soldes.annuel || 0}/30 jours restants
+                </div>
               </div>
-              <div style={{
-                background: "#f3e5f5",
-                padding: "15px",
-                borderRadius: "8px",
-                border: "1px solid #e1bee7"
-              }}>
-                <div style={{ fontSize: "12px", color: "#7b1fa2", marginBottom: "5px" }}>Congés Maladie</div>
-                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#7b1fa2" }}>
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div className="text-sm text-purple-600 mb-2">Congés Maladie</div>
+                <div className="text-2xl font-bold text-purple-600">
                   {soldes.maladie || 0} jours
+                </div>
+                <div className="text-xs text-purple-500 mt-1">
+                  {soldes.maladie || 0}/15 jours restants
+                </div>
+              </div>
+              <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                <div className="text-sm text-pink-600 mb-2">Maternité</div>
+                <div className="text-2xl font-bold text-pink-600">
+                  {soldes.maternite || 0} jours
+                </div>
+                <div className="text-xs text-pink-500 mt-1">
+                  {soldes.maternite || 0}/112 jours restants
+                </div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="text-sm text-green-600 mb-2">Paternité</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {soldes.paternite || 0} jours
+                </div>
+                <div className="text-xs text-green-500 mt-1">
+                  {soldes.paternite || 0}/14 jours restants
                 </div>
               </div>
             </div>
           )}
 
           {/* Formulaire de demande */}
-          <div style={{
-            background: "#f8f9fa",
-            padding: "25px",
-            borderRadius: "10px",
-            marginBottom: "30px",
-            border: "1px solid #e9ecef"
-          }}>
-            <h3 style={{ marginTop: 0, color: "#2c3e50" }}>➕ Nouvelle demande de congé</h3>
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">➕ Nouvelle demande de congé</h3>
             
             <form onSubmit={demanderConge}>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "15px",
-                marginBottom: "20px"
-              }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Type de congé *
                   </label>
                   <select 
@@ -268,12 +238,7 @@ export default function MesConges() {
                     value={form.typeConge}
                     onChange={handleInputChange}
                     required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px"
-                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Choisir un type</option>
                     <option value="Annuel">Annuel ({soldes?.annuel || 0} jours restants)</option>
@@ -285,7 +250,7 @@ export default function MesConges() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date de début *
                   </label>
                   <input
@@ -294,17 +259,12 @@ export default function MesConges() {
                     value={form.dateDebut}
                     onChange={handleInputChange}
                     required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px"
-                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date de fin *
                   </label>
                   <input
@@ -313,31 +273,23 @@ export default function MesConges() {
                     value={form.dateFin}
                     onChange={handleInputChange}
                     required
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px"
-                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+                </div>
+
+                <div className="flex items-end">
+                  {form.dateDebut && form.dateFin && (
+                    <div className="bg-blue-50 p-3 rounded-lg w-full">
+                      <div className="text-sm text-blue-600">
+                        ⏱️ Durée demandée: <strong>{calculerJoursDemandes()} jour(s)</strong>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {form.dateDebut && form.dateFin && (
-                <div style={{
-                  background: "#e3f2fd",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  marginBottom: "15px",
-                  fontSize: "14px",
-                  color: "#1976d2"
-                }}>
-                  ⏱️ Durée demandée: <strong>{calculerJoursDemandes()} jour(s)</strong>
-                </div>
-              )}
-
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Motif (optionnel)
                 </label>
                 <textarea
@@ -346,27 +298,13 @@ export default function MesConges() {
                   onChange={handleInputChange}
                   placeholder="Raison de votre demande de congé..."
                   rows="3"
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    resize: "vertical"
-                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
                 />
               </div>
 
               <button
                 type="submit"
-                style={{
-                  background: "#27ae60",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
+                className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
               >
                 📨 Envoyer la demande
               </button>
@@ -375,39 +313,29 @@ export default function MesConges() {
 
           {/* Liste des congés */}
           <div>
-            <h3 style={{ color: "#2c3e50", marginBottom: "20px" }}>📋 Mes demandes de congé</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-6">📋 Mes demandes de congé</h3>
             
             {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>⏳</div>
+              <div className="text-center py-10 text-gray-500">
+                <div className="text-4xl mb-4">⏳</div>
                 Chargement de vos congés...
               </div>
             ) : conges.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-                <div style={{ fontSize: "48px", marginBottom: "15px" }}>📭</div>
-                <p>Aucune demande de congé pour le moment</p>
+              <div className="text-center py-16 text-gray-500">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-lg">Aucune demande de congé pour le moment</p>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ 
-                  width: "100%", 
-                  borderCollapse: "collapse",
-                  background: "white",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-                }}>
+              <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+                <table className="w-full">
                   <thead>
-                    <tr style={{ 
-                      background: "linear-gradient(135deg, #34495e, #2c3e50)",
-                      color: "white"
-                    }}>
-                      <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Type</th>
-                      <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Période</th>
-                      <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Durée</th>
-                      <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Statut</th>
-                      <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Motif</th>
-                      <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Date demande</th>
+                    <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Type</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Période</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Durée</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold">Statut</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Motif</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold">Date demande</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -417,53 +345,35 @@ export default function MesConges() {
                       return (
                         <tr 
                           key={conge._id}
-                          style={{ 
-                            borderBottom: "1px solid #e9ecef",
-                            background: index % 2 === 0 ? "#f8f9fa" : "white"
-                          }}
+                          className={`border-b border-gray-200 ${
+                            index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                          } hover:bg-gray-100 transition-colors`}
                         >
-                          <td style={{ padding: "15px" }}>
-                            <span style={{
-                              display: "inline-block",
-                              padding: "5px 10px",
-                              background: getTypeCongeColor(conge.typeConge),
-                              color: "white",
-                              borderRadius: "15px",
-                              fontSize: "12px",
-                              fontWeight: "bold"
-                            }}>
+                          <td className="px-6 py-4">
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTypeCongeColor(conge.typeConge)}`}>
                               {conge.typeConge}
                             </span>
                           </td>
-                          <td style={{ padding: "15px", color: "#2c3e50" }}>
+                          <td className="px-6 py-4 text-gray-800">
                             <div><strong>Début:</strong> {new Date(conge.dateDebut).toLocaleDateString()}</div>
                             <div><strong>Fin:</strong> {new Date(conge.dateFin).toLocaleDateString()}</div>
                           </td>
-                          <td style={{ padding: "15px", color: "#7f8c8d" }}>
+                          <td className="px-6 py-4 text-gray-600">
                             {duree} jour{duree > 1 ? 's' : ''}
                           </td>
-                          <td style={{ padding: "15px", textAlign: "center" }}>
-                            <span style={{
-                              display: "inline-block",
-                              padding: "6px 12px",
-                              background: getStatutColor(conge.statut),
-                              color: "white",
-                              borderRadius: "20px",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              minWidth: "100px"
-                            }}>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-block px-4 py-2 rounded-full text-xs font-semibold min-w-[100px] ${getStatutColor(conge.statut)}`}>
                               {conge.statut}
                             </span>
                           </td>
-                          <td style={{ padding: "15px", color: "#7f8c8d", maxWidth: "200px" }}>
+                          <td className="px-6 py-4 text-gray-600 max-w-xs">
                             {conge.motif || (
-                              <span style={{ fontStyle: "italic", color: "#bdc3c7" }}>
+                              <span className="italic text-gray-400">
                                 Aucun motif
                               </span>
                             )}
                           </td>
-                          <td style={{ padding: "15px", color: "#7f8c8d", fontSize: "13px" }}>
+                          <td className="px-6 py-4 text-gray-600 text-sm">
                             {new Date(conge.createdAt).toLocaleDateString()}
                           </td>
                         </tr>
@@ -480,101 +390,77 @@ export default function MesConges() {
       {/* Onglet Soldes */}
       {activeTab === 'soldes' && soldes && (
         <div>
-          <h3 style={{ color: "#2c3e50", marginBottom: "30px" }}>💰 Mes soldes de congé</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-8">💰 Mes soldes de congé</h3>
           
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "20px"
-          }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Carte Congés Annuels */}
-            <div style={{
-              background: "white",
-              padding: "25px",
-              borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              borderLeft: `4px solid #3498db`
-            }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
-                <div style={{
-                  width: "50px",
-                  height: "50px",
-                  background: "#3498db",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  fontSize: "20px",
-                  marginRight: "15px"
-                }}>
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
                   📅
                 </div>
                 <div>
-                  <h4 style={{ margin: "0 0 5px 0", color: "#2c3e50" }}>Congés Annuels</h4>
-                  <p style={{ margin: 0, color: "#7f8c8d", fontSize: "14px" }}>Solde annuel</p>
+                  <h4 className="font-semibold text-gray-800 mb-1">Congés Annuels</h4>
+                  <p className="text-gray-500 text-sm">Solde annuel</p>
                 </div>
               </div>
-              <div style={{ 
-                background: "#ecf0f1", 
-                borderRadius: "8px", 
-                padding: "15px",
-                marginBottom: "15px"
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#7f8c8d" }}>Solde restant:</span>
-                  <span style={{ 
-                    fontWeight: "bold", 
-                    color: getSoldeColor(soldes.annuel || 0, 25)
-                  }}>
+              <div className="bg-gray-100 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Solde restant:</span>
+                  <span className={`font-bold text-lg ${getSoldeColor(soldes.annuel || 0, 30)}`}>
                     {soldes.annuel || 0} jours
                   </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  Sur 30 jours annuels
                 </div>
               </div>
             </div>
 
             {/* Carte Congés Maladie */}
-            <div style={{
-              background: "white",
-              padding: "25px",
-              borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              borderLeft: `4px solid #9b59b6`
-            }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
-                <div style={{
-                  width: "50px",
-                  height: "50px",
-                  background: "#9b59b6",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  fontSize: "20px",
-                  marginRight: "15px"
-                }}>
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500 hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
                   🏥
                 </div>
                 <div>
-                  <h4 style={{ margin: "0 0 5px 0", color: "#2c3e50" }}>Congés Maladie</h4>
-                  <p style={{ margin: 0, color: "#7f8c8d", fontSize: "14px" }}>Arrêts maladie</p>
+                  <h4 className="font-semibold text-gray-800 mb-1">Congés Maladie</h4>
+                  <p className="text-gray-500 text-sm">Arrêts maladie</p>
                 </div>
               </div>
-              <div style={{ 
-                background: "#ecf0f1", 
-                borderRadius: "8px", 
-                padding: "15px",
-                marginBottom: "15px"
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#7f8c8d" }}>Solde restant:</span>
-                  <span style={{ 
-                    fontWeight: "bold", 
-                    color: getSoldeColor(soldes.maladie || 0, 15)
-                  }}>
+              <div className="bg-gray-100 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Solde restant:</span>
+                  <span className={`font-bold text-lg ${getSoldeColor(soldes.maladie || 0, 15)}`}>
                     {soldes.maladie || 0} jours
                   </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  Sur 15 jours maladie
+                </div>
+              </div>
+            </div>
+
+            {/* Carte Maternité */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-pink-500 hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white text-xl mr-4">
+                  👶
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-1">Maternité</h4>
+                  <p className="text-gray-500 text-sm">Congé maternité</p>
+                </div>
+              </div>
+              <div className="bg-gray-100 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Solde restant:</span>
+                  <span className="font-bold text-lg text-gray-800">
+                    {soldes.maternite || 0} jours
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  Sur 112 jours de maternité
                 </div>
               </div>
             </div>

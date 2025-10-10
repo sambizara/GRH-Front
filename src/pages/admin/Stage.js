@@ -6,7 +6,7 @@ export default function StagesAdmin() {
   const [encadreurs, setEncadreurs] = useState([]);
   const [stagesSansEncadreur, setStagesSansEncadreur] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("tous"); // "tous" ou "sans-encadreur"
+  const [activeTab, setActiveTab] = useState("tous");
   const [searchTerm, setSearchTerm] = useState("");
   const [notificationForm, setNotificationForm] = useState({ show: false, userId: "", message: "" });
   const [assignForm, setAssignForm] = useState({ show: false, stageId: "", encadreurId: "" });
@@ -25,7 +25,7 @@ export default function StagesAdmin() {
     setLoading(true);
     try {
       const response = await api.get("/stages");
-      setStages(response.data);
+      setStages(response.data.stages || response.data);
     } catch (error) {
       console.error("Erreur chargement stages:", error);
       alert("Erreur lors du chargement des stages");
@@ -37,7 +37,7 @@ export default function StagesAdmin() {
   const fetchStagesSansEncadreur = async () => {
     try {
       const response = await api.get("/stages/sans-encadreur");
-      setStagesSansEncadreur(response.data);
+      setStagesSansEncadreur(response.data.stages || response.data);
     } catch (error) {
       console.error("Erreur chargement stages sans encadreur:", error);
     }
@@ -47,7 +47,7 @@ export default function StagesAdmin() {
     try {
       const response = await api.get("/users");
       const encadreursList = response.data.filter(user => 
-        user.role === "SALARIE" || user.role === "ADMIN_RH"
+        user.role === "SALARIE" && user.actif !== false
       );
       setEncadreurs(encadreursList);
     } catch (error) {
@@ -65,7 +65,7 @@ export default function StagesAdmin() {
     }
 
     try {
-      await api.post("/stages/assign", {
+      await api.post("/stages/assigner-encadreur", {
         stageId: assignForm.stageId,
         encadreurId: assignForm.encadreurId
       });
@@ -83,7 +83,7 @@ export default function StagesAdmin() {
   // Mettre à jour le statut d'un stage
   const updateStageStatus = async (id, statut) => {
     try {
-      await api.put(`/stages/${id}/statut`, { statut });
+      await api.patch(`/stages/${id}/statut`, { statut });
       alert(`Statut du stage mis à jour: ${statut}`);
       fetchStages();
       fetchStagesSansEncadreur();
@@ -120,7 +120,7 @@ export default function StagesAdmin() {
     }
 
     try {
-      await api.post("/stages/notify", {
+      await api.post("/stages/notifier", {
         userId: notificationForm.userId,
         type: "Stage",
         message: notificationForm.message
@@ -136,14 +136,34 @@ export default function StagesAdmin() {
   // Fonction pour obtenir le style du statut
   const getStatutStyle = (statut) => {
     switch (statut) {
+      case "En attente":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "Confirmé":
+        return "bg-green-100 text-green-800 border-green-200";
       case "En cours":
-        return { background: "#3498db", color: "white" };
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "Terminé":
-        return { background: "#2ecc71", color: "white" };
+        return "bg-green-100 text-green-800 border-green-200";
       case "Annulé":
-        return { background: "#e74c3c", color: "white" };
+        return "bg-red-100 text-red-800 border-red-200";
+      case "Rejeté":
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
-        return { background: "#bdc3c7", color: "white" };
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  // Fonction pour obtenir le style de confirmation
+  const getConfirmationStyle = (confirmationStatut) => {
+    switch (confirmationStatut) {
+      case 'en_attente':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'confirmé':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'rejeté':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -166,10 +186,10 @@ export default function StagesAdmin() {
     const diffTime = fin - maintenant;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays < 0) return { background: "#95a5a6", color: "white" };
-    if (diffDays <= 7) return { background: "#e74c3c", color: "white" };
-    if (diffDays <= 30) return { background: "#f39c12", color: "white" };
-    return { background: "#2ecc71", color: "white" };
+    if (diffDays < 0) return "bg-gray-500 text-white";
+    if (diffDays <= 7) return "bg-red-500 text-white";
+    if (diffDays <= 30) return "bg-orange-500 text-white";
+    return "bg-green-500 text-white";
   };
 
   // Filtrage et pagination
@@ -200,95 +220,102 @@ export default function StagesAdmin() {
     setCurrentPage(pageNumber);
   };
 
+  // Statistiques
+  const stats = {
+    total: stages.length,
+    enAttente: stages.filter(s => s.statut === "En attente").length,
+    confirmes: stages.filter(s => s.statut === "Confirmé").length,
+    enCours: stages.filter(s => s.statut === "En cours").length,
+    termines: stages.filter(s => s.statut === "Terminé").length,
+    sansEncadreur: stagesSansEncadreur.length
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* En-tête avec onglets */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "30px",
-        flexWrap: "wrap",
-        gap: "15px"
-      }}>
-        <h1 style={{ margin: 0, color: "#2c3e50" }}>🎓 Gestion des Stages (Admin)</h1>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">🎓 Gestion des Stages (Admin)</h1>
+          <p className="text-gray-600 mt-1">Gérez tous les stages et assignations</p>
+        </div>
         
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           {/* Barre de recherche */}
-          <div style={{ position: "relative" }}>
+          <div className="relative">
             <input
               type="text"
               placeholder="Rechercher un stage..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "10px 40px 10px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                width: "250px",
-                fontSize: "14px"
-              }}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
             />
-            <span style={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#7f8c8d"
-            }}>
-              🔍
-            </span>
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">🔍</span>
+            </div>
           </div>
 
           {/* Bouton Assigner encadreur */}
           <button
             onClick={() => setAssignForm({ show: true, stageId: "", encadreurId: "" })}
             disabled={stagesSansEncadreur.length === 0}
-            style={{
-              background: stagesSansEncadreur.length === 0 ? "#bdc3c7" : "#9b59b6",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: stagesSansEncadreur.length === 0 ? "not-allowed" : "pointer",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
+              stagesSansEncadreur.length === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-purple-600 hover:bg-purple-700 text-white'
+            }`}
           >
             👥 Assigner encadreur
           </button>
         </div>
       </div>
 
+      {/* Statistiques */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="text-sm text-gray-500">Total</div>
+          <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+        </div>
+        <div className="bg-yellow-50 rounded-lg p-4 shadow-sm border border-yellow-200">
+          <div className="text-sm text-yellow-600">En attente</div>
+          <div className="text-2xl font-bold text-yellow-700">{stats.enAttente}</div>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-200">
+          <div className="text-sm text-green-600">Confirmés</div>
+          <div className="text-2xl font-bold text-green-700">{stats.confirmes}</div>
+        </div>
+        <div className="bg-blue-50 rounded-lg p-4 shadow-sm border border-blue-200">
+          <div className="text-sm text-blue-600">En cours</div>
+          <div className="text-2xl font-bold text-blue-700">{stats.enCours}</div>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-200">
+          <div className="text-sm text-green-600">Terminés</div>
+          <div className="text-2xl font-bold text-green-700">{stats.termines}</div>
+        </div>
+        <div className="bg-red-50 rounded-lg p-4 shadow-sm border border-red-200">
+          <div className="text-sm text-red-600">Sans encadreur</div>
+          <div className="text-2xl font-bold text-red-700">{stats.sansEncadreur}</div>
+        </div>
+      </div>
+
       {/* Onglets */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+      <div className="flex gap-2 mb-6">
         <button
           onClick={() => { setActiveTab("tous"); setCurrentPage(1); }}
-          style={{
-            background: activeTab === "tous" ? "#3498db" : "white",
-            color: activeTab === "tous" ? "white" : "#3498db",
-            border: "1px solid #3498db",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            activeTab === "tous" 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50'
+          }`}
         >
           Tous les stages ({stages.length})
         </button>
         <button
           onClick={() => { setActiveTab("sans-encadreur"); setCurrentPage(1); }}
-          style={{
-            background: activeTab === "sans-encadreur" ? "#e74c3c" : "white",
-            color: activeTab === "sans-encadreur" ? "white" : "#e74c3c",
-            border: "1px solid #e74c3c",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            activeTab === "sans-encadreur" 
+              ? 'bg-red-600 text-white' 
+              : 'bg-white text-red-600 border border-red-600 hover:bg-red-50'
+          }`}
         >
           Stages sans encadreur ({stagesSansEncadreur.length})
         </button>
@@ -296,36 +323,20 @@ export default function StagesAdmin() {
 
       {/* Formulaire d'assignation d'encadreur */}
       {assignForm.show && (
-        <div style={{
-          background: "#f8f9fa",
-          padding: "25px",
-          borderRadius: "10px",
-          marginBottom: "30px",
-          border: "1px solid #e9ecef"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            👥 Assigner un encadreur
+        <div className="bg-white rounded-lg p-6 mb-6 shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <span className="mr-2">👥</span>
+            Assigner un encadreur
           </h3>
           
-          <form onSubmit={handleAssignEncadreur} style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "15px"
-          }}>
+          <form onSubmit={handleAssignEncadreur} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Stage *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Stage *</label>
               <select
                 value={assignForm.stageId}
                 onChange={(e) => setAssignForm(prev => ({ ...prev, stageId: e.target.value }))}
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  background: "white"
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Sélectionner un stage</option>
                 {stagesSansEncadreur.map(stage => (
@@ -337,19 +348,12 @@ export default function StagesAdmin() {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Encadreur *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Encadreur *</label>
               <select
                 value={assignForm.encadreurId}
                 onChange={(e) => setAssignForm(prev => ({ ...prev, encadreurId: e.target.value }))}
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  background: "white"
-                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Sélectionner un encadreur</option>
                 {encadreurs.map(encadreur => (
@@ -360,32 +364,17 @@ export default function StagesAdmin() {
               </select>
             </div>
 
-            <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+            <div className="md:col-span-2 flex gap-3 justify-end pt-4">
               <button
                 type="button"
                 onClick={() => setAssignForm({ show: false, stageId: "", encadreurId: "" })}
-                style={{
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
               >
                 Annuler
               </button>
               <button
                 type="submit"
-                style={{
-                  background: "#9b59b6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
               >
                 Assigner
               </button>
@@ -396,52 +385,34 @@ export default function StagesAdmin() {
 
       {/* Pagination */}
       {filteredStages.length > 0 && (
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "15px 20px",
-          background: "#f8f9fa",
-          border: "1px solid #e9ecef",
-          borderRadius: "8px",
-          marginBottom: "20px"
-        }}>
-          <div style={{ color: "#6c757d", fontSize: "14px" }}>
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm border flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-600 text-sm">
             Affichage de {indexOfFirstStage + 1} à {Math.min(indexOfLastStage, filteredStages.length)} sur {filteredStages.length} stage(s)
           </div>
           
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === 1 ? "#f8f9fa" : "white",
-                color: currentPage === 1 ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px"
-              }}
+              className={`px-3 py-1 border rounded text-sm ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+              }`}
             >
               ◀ Précédent
             </button>
 
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "1px solid #dee2e6",
-                    background: currentPage === page ? "#007bff" : "white",
-                    color: currentPage === page ? "white" : "#007bff",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    minWidth: "40px"
-                  }}
+                  className={`px-3 py-1 border rounded text-sm min-w-[40px] ${
+                    currentPage === page 
+                      ? 'bg-blue-600 text-white border-blue-600' 
+                      : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+                  }`}
                 >
                   {page}
                 </button>
@@ -451,34 +422,25 @@ export default function StagesAdmin() {
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === totalPages ? "#f8f9fa" : "white",
-                color: currentPage === totalPages ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px"
-              }}
+              className={`px-3 py-1 border rounded text-sm ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+              }`}
             >
               Suivant ▶
             </button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "#6c757d" }}>Stages par page:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Stages par page:</span>
             <select
               value={stagesPerPage}
               onChange={(e) => {
                 setStagesPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #dee2e6",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -491,133 +453,122 @@ export default function StagesAdmin() {
       )}
 
       {/* Tableau des stages */}
-      <div style={{
-        background: "white",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-      }}>
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            Chargement des stages...
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Chargement des stages...</p>
           </div>
         ) : filteredStages.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            {searchTerm ? "Aucun stage trouvé" : "Aucun stage enregistré"}
+          <div className="text-center py-10">
+            <div className="text-4xl mb-2">😔</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">
+              {searchTerm ? "Aucun stage trouvé" : "Aucun stage enregistré"}
+            </h3>
+            <p className="text-gray-600">
+              {searchTerm ? "Essayez de modifier vos critères de recherche" : "Commencez par créer un nouveau stage"}
+            </p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: "#34495e", color: "white" }}>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Stagiaire</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Encadreur</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Sujet</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Période</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Durée restante</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Statut</th>
-                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Actions</th>
+                <tr className="bg-gray-800 text-white">
+                  <th className="p-4 text-left text-sm font-semibold">Stagiaire</th>
+                  <th className="p-4 text-left text-sm font-semibold">Encadreur</th>
+                  <th className="p-4 text-left text-sm font-semibold">Sujet</th>
+                  <th className="p-4 text-left text-sm font-semibold">Période</th>
+                  <th className="p-4 text-left text-sm font-semibold">Durée restante</th>
+                  <th className="p-4 text-left text-sm font-semibold">Statut</th>
+                  <th className="p-4 text-left text-sm font-semibold">Confirmation</th>
+                  <th className="p-4 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {currentStages.map((stage, index) => (
                   <tr 
                     key={stage._id}
-                    style={{ 
-                      background: index % 2 === 0 ? "#f8f9fa" : "white",
-                      borderBottom: "1px solid #e9ecef"
-                    }}
+                    className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
-                    <td style={{ padding: "15px" }}>
-                      <div style={{ fontWeight: "500" }}>
+                    <td className="p-4">
+                      <div className="font-medium text-gray-900">
                         {stage.stagiaire ? `${stage.stagiaire.nom} ${stage.stagiaire.prenom}` : "-"}
                       </div>
-                      <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
+                      <div className="text-sm text-gray-500 mt-1">
                         {stage.stagiaire?.email}
                       </div>
+                      {stage.stagiaire?.poste && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {stage.stagiaire.poste}
+                        </div>
+                      )}
                     </td>
-                    <td style={{ padding: "15px" }}>
+                    <td className="p-4">
                       {stage.encadreur ? (
                         <>
-                          <div style={{ fontWeight: "500" }}>
+                          <div className="font-medium text-gray-900">
                             {stage.encadreur.nom} {stage.encadreur.prenom}
                           </div>
-                          <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
+                          <div className="text-sm text-gray-500 mt-1">
                             {stage.encadreur.email}
                           </div>
                         </>
                       ) : (
-                        <span style={{ color: "#e74c3c", fontStyle: "italic" }}>
+                        <span className="text-red-600 font-medium italic">
                           Non assigné
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "15px", maxWidth: "200px" }}>
-                      <div style={{ fontWeight: "500" }}>
+                    <td className="p-4 max-w-xs">
+                      <div className="font-medium text-gray-900">
                         {stage.sujet}
                       </div>
+                      {stage.theme && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Thème: {stage.theme}
+                        </div>
+                      )}
                     </td>
-                    <td style={{ padding: "15px", color: "#7f8c8d" }}>
-                      <div>
+                    <td className="p-4">
+                      <div className="text-gray-900">
                         {new Date(stage.dateDebut).toLocaleDateString('fr-FR')}
                       </div>
-                      <div style={{ fontSize: "12px" }}>
+                      <div className="text-sm text-gray-500">
                         au {new Date(stage.dateFin).toLocaleDateString('fr-FR')}
                       </div>
                     </td>
-                    <td style={{ padding: "15px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        ...getDureeStyle(stage.dateFin)
-                      }}>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDureeStyle(stage.dateFin)}`}>
                         {calculerDureeRestante(stage.dateFin)}
                       </span>
                     </td>
-                    <td style={{ padding: "15px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        ...getStatutStyle(stage.statut)
-                      }}>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatutStyle(stage.statut)}`}>
                         {stage.statut}
                       </span>
                     </td>
-                    <td style={{ padding: "15px", textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getConfirmationStyle(stage.confirmationEncadreur?.statut)}`}>
+                        {stage.confirmationEncadreur?.statut === 'en_attente' && '⏳ En attente'}
+                        {stage.confirmationEncadreur?.statut === 'confirmé' && '✅ Confirmé'}
+                        {stage.confirmationEncadreur?.statut === 'rejeté' && '❌ Rejeté'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-2 justify-center">
                         {/* Changer statut */}
-                        {stage.statut !== "Terminé" && (
+                        {stage.statut !== "Terminé" && stage.statut !== "Rejeté" && (
                           <button
                             onClick={() => updateStageStatus(stage._id, "Terminé")}
-                            style={{
-                              background: "#2ecc71",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "12px"
-                            }}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs transition-colors"
                           >
                             ✅ Terminer
                           </button>
                         )}
-                        {stage.statut !== "Annulé" && (
+                        {stage.statut !== "Annulé" && stage.statut !== "Rejeté" && (
                           <button
                             onClick={() => updateStageStatus(stage._id, "Annulé")}
-                            style={{
-                              background: "#e74c3c",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "12px"
-                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition-colors"
                           >
                             ❌ Annuler
                           </button>
@@ -630,15 +581,7 @@ export default function StagesAdmin() {
                             userId: stage.stagiaire?._id, 
                             message: `Stage: ${stage.sujet}` 
                           })}
-                          style={{
-                            background: "#f39c12",
-                            color: "white",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "12px"
-                          }}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs transition-colors"
                         >
                           📧 Notifier
                         </button>
@@ -646,15 +589,7 @@ export default function StagesAdmin() {
                         {/* Supprimer */}
                         <button
                           onClick={() => handleDelete(stage)}
-                          style={{
-                            background: "#95a5a6",
-                            color: "white",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "12px"
-                          }}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs transition-colors"
                         >
                           🗑️ Supprimer
                         </button>
@@ -668,152 +603,49 @@ export default function StagesAdmin() {
         )}
       </div>
 
-      {/* Formulaire de notification */}
+      {/* Modal de notification */}
       {notificationForm.show && (
-        <div style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          background: "white",
-          padding: "25px",
-          borderRadius: "10px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-          zIndex: 1000,
-          minWidth: "400px"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            📧 Envoyer une notification
-          </h3>
-          
-          <form onSubmit={sendNotification} style={{ display: "grid", gap: "15px" }}>
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Message *</label>
-              <textarea
-                value={notificationForm.message}
-                onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
-                placeholder="Votre message de notification..."
-                rows="4"
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  resize: "vertical"
-                }}
-              />
-            </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <span className="mr-2">📧</span>
+                Envoyer une notification
+              </h3>
+              
+              <form onSubmit={sendNotification} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
+                  <textarea
+                    value={notificationForm.message}
+                    onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Votre message de notification..."
+                    rows="4"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                  />
+                </div>
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={() => setNotificationForm({ show: false, userId: "", message: "" })}
-                style={{
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#3498db",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
-              >
-                Envoyer
-              </button>
+                <div className="flex gap-3 justify-end pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setNotificationForm({ show: false, userId: "", message: "" })}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                  >
+                    Envoyer
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       )}
-
-      {/* Overlay pour le formulaire de notification */}
-      {notificationForm.show && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.5)",
-          zIndex: 999
-        }} />
-      )}
-
-      {/* Statistiques */}
-      <div style={{
-        marginTop: "20px",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total stages</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{stages.length}</div>
-        </div>
-        
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>En cours</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {stages.filter(s => s.statut === "En cours").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Terminés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {stages.filter(s => s.statut === "Terminé").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#e74c3c",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Sans encadreur</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {stagesSansEncadreur.length}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

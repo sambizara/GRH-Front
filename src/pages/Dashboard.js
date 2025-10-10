@@ -173,61 +173,144 @@ const Dashboard = () => {
     }
   }, [fetchUserStatistics, fetchContratStatistics]);
 
-  // 🔹 STATISTIQUES POUR SALARIE
-  const fetchSalarieStats = useCallback(async () => {
+ // 🔹 CORRECTION DES SOLDES DE CONGÉS DANS Dashboard.js
+const fetchSalarieStats = useCallback(async () => {
+  try {
+    console.log("🔄 Chargement des stats salarié...");
+
+    const results = {
+      mesCongesCount: 0,
+      soldeConges: 0,
+      mesContratsCount: 0,
+      mesAttestationsCount: 0
+    };
+
+    // 1. Chargement des congés
     try {
-      // Mes congés en cours
-      let mesCongesCount = 0;
-      try {
-        const congesResponse = await api.get("/conges/mes-conges");
-        const congesEnCours = congesResponse.data.conges.filter(conge => 
-          (conge.statut === 'Approuvé' || conge.statut === 'APPROUVE') && new Date(conge.dateFin) >= new Date()
-        );
-        mesCongesCount = congesEnCours.length;
-      } catch (error) {
-        console.log("Chargement mes congés échoué:", error);
+      const congesResponse = await api.get("/conges/mes-conges");
+      console.log("📊 Réponse mes-conges:", congesResponse.data);
+      
+      // Gestion des différentes structures de réponse
+      let congesData = [];
+      if (congesResponse.data.success !== false) {
+        congesData = congesResponse.data.conges || congesResponse.data || [];
       }
-
-      // Mes contrats
-      let mesContratsCount = 0;
-      try {
-        const contratsResponse = await api.get("/contrats/mes-contrats/moi");
-        const contratsActifs = contratsResponse.data.contrats || contratsResponse.data;
-        mesContratsCount = contratsActifs.filter(contrat => 
-          contrat.statut === "Actif"
-        ).length;
-      } catch (error) {
-        console.log("Chargement mes contrats échoué:", error);
-      }
-
-      // Solde de congés
-      let soldeConges = 0;
-      try {
-        const soldesResponse = await api.get("/conges/mes-soldes");
-        soldeConges = soldesResponse.data.solde || 0;
-      } catch (error) {
-        console.log("Chargement solde échoué:", error);
-      }
-
-      // Mes attestations
-      let mesAttestationsCount = 0;
-      try {
-        mesAttestationsCount = 0;
-      } catch (error) {
-        console.log("Chargement attestations échoué:", error);
-      }
-
-      setStats([
-        { label: 'Mes congés en cours', value: mesCongesCount.toString(), color: 'bg-orange-500', key: 'mesConges', icon: '🏖️' },
-        { label: 'Solde congés', value: soldeConges.toString(), color: 'bg-green-500', key: 'soldeConges', icon: '📊' },
-        { label: 'Mes contrats', value: mesContratsCount.toString(), color: 'bg-purple-500', key: 'mesContrats', icon: '📝' },
-        { label: 'Attestations', value: mesAttestationsCount.toString(), color: 'bg-blue-500', key: 'attestations', icon: '📄' },
-      ]);
-
+      
+      results.mesCongesCount = congesData.filter(conge => {
+        const estApprouve = conge.statut === 'Approuvé' || conge.statut === 'APPROUVE';
+        const estEnCours = new Date(conge.dateFin) >= new Date();
+        return estApprouve && estEnCours;
+      }).length;
     } catch (error) {
-      console.error("Erreur stats salarié:", error);
+      console.log("❌ Chargement congés:", error.response?.data || error.message);
     }
-  }, []);
+
+    // 2. Chargement des soldes - CORRECTION COMPLÈTE
+    try {
+      const soldesResponse = await api.get("/conges/mes-soldes");
+      console.log("💰 Réponse mes-soldes COMPLÈTE:", soldesResponse.data);
+      
+      const soldesData = soldesResponse.data;
+      
+      // Gestion de TOUTES les structures possibles
+      if (soldesData.success !== false) {
+        if (soldesData.soldes) {
+          // Structure: { success: true, soldes: { annuel: X, maladie: Y, ... } }
+          results.soldeConges = soldesData.soldes.annuel || 0;
+        } else if (soldesData.soldesDetails) {
+          // Structure: { success: true, soldesDetails: { annuel: { restant: X }, ... } }
+          results.soldeConges = soldesData.soldesDetails.annuel?.restant || 0;
+        } else if (soldesData.annuel !== undefined) {
+          // Structure: { annuel: X, maladie: Y, ... }
+          results.soldeConges = soldesData.annuel;
+        } else if (typeof soldesData === 'number') {
+          // Structure: 25 (nombre direct)
+          results.soldeConges = soldesData;
+        } else {
+          // Structure par défaut
+          results.soldeConges = soldesData.solde || 0;
+        }
+      } else {
+        console.log("❌ API soldes retourne success: false");
+      }
+    } catch (error) {
+      console.log("❌ Chargement soldes:", error.response?.data || error.message);
+    }
+
+    // 3. Chargement des contrats
+    try {
+      const contratsResponse = await api.get("/contrats/mes/contrats");
+      console.log("📝 Réponse contrats:", contratsResponse.data);
+      
+      let contratsData = [];
+      if (contratsResponse.data.success !== false) {
+        contratsData = contratsResponse.data.contrats || contratsResponse.data || [];
+      }
+      
+      results.mesContratsCount = contratsData.filter(contrat => 
+        contrat.statut === "Actif"
+      ).length;
+    } catch (error) {
+      console.log("❌ Chargement contrats:", error.response?.data || error.message);
+    }
+
+    // 4. Chargement des attestations - CORRECTION APPLIQUÉE
+    try {
+      const attestationsResponse = await api.get("/attestations/mes-attestations");
+      console.log("📄 Réponse attestations:", attestationsResponse.data);
+      
+      let attestationsData = [];
+      if (attestationsResponse.data.success !== false) {
+        attestationsData = attestationsResponse.data.attestations || attestationsResponse.data || [];
+      }
+      
+      results.mesAttestationsCount = attestationsData.filter(attestation => 
+        attestation.statut === "Générée" || 
+        attestation.statut === "Actif" || 
+        attestation.statut === "Approuvé" ||
+        attestation.statut === "APPROUVE"
+      ).length;
+    } catch (error) {
+      console.log("❌ Chargement attestations:", error.response?.data || error.message);
+    }
+
+    console.log("📈 Stats salarié finales:", results);
+
+    setStats([
+      { 
+        label: 'Congés en cours', 
+        value: results.mesCongesCount.toString(), 
+        color: 'bg-orange-500', 
+        key: 'mesConges', 
+        icon: '🏖️' 
+      },
+      { 
+        label: 'Jours congés restants', 
+        value: results.soldeConges.toString(), 
+        color: 'bg-green-500', 
+        key: 'soldeConges', 
+        icon: '📊' 
+      },
+      { 
+        label: 'Contrats actifs', 
+        value: results.mesContratsCount.toString(), 
+        color: 'bg-purple-500', 
+        key: 'mesContrats', 
+        icon: '📝' 
+      },
+      { 
+        label: 'Attestations', 
+        value: results.mesAttestationsCount.toString(), 
+        color: 'bg-blue-500', 
+        key: 'attestations', 
+        icon: '📄' 
+      },
+    ]);
+
+  } catch (error) {
+    console.error("❌ Erreur générale stats salarié:", error);
+  }
+}, []);
 
   // 🔹 STATISTIQUES POUR STAGIAIRE
   const fetchStagiaireStats = useCallback(async () => {

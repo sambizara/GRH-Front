@@ -18,7 +18,7 @@ const Sidebar = ({ userRole }) => {
       { path: '/salarie/dashboard', label: 'Dashboard', icon: '📊' },
       { path: '/salarie/profil', label: 'Mon Profil', icon: '👤' },
       { path: '/salarie/conges', label: 'Mes Congés', icon: '🌴' },
-      { path: '/salarie/presence', label: 'Mes Présences', icon: '⏰' },
+      { path: '/salarie/messtagesencadres', label: 'Mes Stages Encadrés', icon: '⏰' },
       { path: '/salarie/attestations', label: 'Mes Attestations', icon: '📄' },
       { path: '/salarie/contrats', label: 'Mes Contrats', icon: '📝' },
     ],
