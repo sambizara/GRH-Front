@@ -128,44 +128,6 @@ export default function MonStage() {
 
         {/* Informations principales */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Informations stagiaire */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <span className="mr-2">👤</span>
-              Mes Informations
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Nom complet</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.prenom} {stage.stagiaire.nom}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Email</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">École</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.ecole}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Filière</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.filiere}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Niveau</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.niveau}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Poste</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.poste}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Durée du stage</label>
-                <p className="font-medium text-gray-800">{stage.stagiaire.dureeStage} mois</p>
-              </div>
-            </div>
-          </div>
-
           {/* Informations encadrement */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -207,20 +169,20 @@ export default function MonStage() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Thème et Objectifs */}
-        {stage.theme && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* Thème et Objectifs */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <span className="mr-2">🎯</span>
-              Thème et Objectifs du Stage
+              Détails du Stage
             </h3>
             <div className="space-y-6">
-              <div>
-                <label className="block text-sm text-gray-500 mb-2">Thème principal</label>
-                <p className="font-medium text-gray-800 text-lg">{stage.theme}</p>
-              </div>
+              {stage.theme && (
+                <div>
+                  <label className="block text-sm text-gray-500 mb-2">Thème principal</label>
+                  <p className="font-medium text-gray-800 text-lg">{stage.theme}</p>
+                </div>
+              )}
               
               {stage.objectifs && stage.objectifs.length > 0 && (
                 <div>
@@ -262,7 +224,7 @@ export default function MonStage() {
               )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Période et durée */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

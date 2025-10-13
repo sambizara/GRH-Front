@@ -3,7 +3,7 @@ import api from "../../api/axiosConfig";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
-  const [postes, setPostes] = useState([]);
+  const [salariesDisponibles, setSalariesDisponibles] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState(null);
@@ -32,36 +32,30 @@ export default function Users() {
     filiere: "",
     niveau: "Licence 3",
     dureeStage: 6,
-    poste: ""
+    poste: "",
+    encadreur: ""
   });
 
-  // ✅ SÉCURISATION : Toujours utiliser un tableau
-  const safeUsers = Array.isArray(users) ? users : [];
-
-  // Charger les services et postes
+  // Charger les salariés disponibles
   useEffect(() => {
-    fetchServices();
+    fetchSalariesDisponibles();
   }, []);
 
-  const fetchServices = async () => {
+  // Charger les salariés disponibles
+  const fetchSalariesDisponibles = async () => {
     try {
-      const response = await api.get("/services");
-      
-      // Extraire tous les postes uniques de tous les services
-      const tousLesPostes = response.data.flatMap(service => service.postes || []);
-      const postesUniques = [...new Set(tousLesPostes)].sort();
-      setPostes(postesUniques);
-      
-      console.log("📋 Postes disponibles:", postesUniques);
+      const response = await api.get("/users/salaries/disponibles");
+      setSalariesDisponibles(response.data.salaries || []);
+      console.log("👥 Salariés disponibles:", response.data.salaries);
     } catch (error) {
-      console.error("Erreur chargement des services:", error);
-      setPostes([]);
+      console.error("Erreur chargement salariés disponibles:", error);
+      setSalariesDisponibles([]);
     }
   };
 
-  // Filtrer les utilisateurs - UTILISER safeUsers
+  // Filtrer les utilisateurs (seulement les actifs)
   const getFilteredUsers = () => {
-    let filtered = safeUsers.filter(user =>
+    let filtered = users.filter(user =>
       user.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,6 +118,7 @@ export default function Users() {
         { key: 'niveau', label: 'Niveau' },
         { key: 'dureeStage', label: 'Durée (mois)' },
         { key: 'poste', label: 'Poste' },
+        { key: 'encadreur', label: 'Encadreur' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -219,6 +214,20 @@ export default function Users() {
           </span>
         ) : "-";
 
+      case 'encadreur':
+        if (user.encadreur) {
+          const encadreur = salariesDisponibles.find(s => s._id === user.encadreur);
+          return encadreur ? (
+            <div className="text-sm">
+              <div className="font-medium">{encadreur.nom} {encadreur.prenom}</div>
+              <div className="text-gray-500 text-xs">{encadreur.posteActuel}</div>
+            </div>
+          ) : (
+            <span className="text-gray-400 text-sm">Chargement...</span>
+          );
+        }
+        return <span className="text-gray-400 text-sm">-</span>;
+
       case 'dateCreation':
         return (
           <div className="text-sm text-gray-600">
@@ -238,7 +247,7 @@ export default function Users() {
             </button>
             <button
               onClick={() => handleDelete(user)}
-              className="bg-gray-200 hover:bg-red-100 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+              className="bg-red-200 hover:bg-red-300 text-red-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
             >
               <span>🗑️</span>
               Supprimer
@@ -268,7 +277,7 @@ export default function Users() {
     setCurrentPage(pageNumber);
   };
 
-  // Charger les utilisateurs - CORRIGÉ
+  // Charger les utilisateurs
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -277,25 +286,10 @@ export default function Users() {
     try {
       setLoading(true);
       const response = await api.get("/users");
-      
-      // ✅ CORRECTION : Gérer les deux formats de réponse
-      console.log("📊 Réponse API users:", response.data);
-      
-      if (response.data.success && Array.isArray(response.data.users)) {
-        // Nouvelle structure : { success: true, users: [...] }
-        setUsers(response.data.users);
-      } else if (Array.isArray(response.data)) {
-        // Ancienne structure : [...]
-        setUsers(response.data);
-      } else {
-        // Structure inattendue
-        console.error("❌ Format de données inattendu:", response.data);
-        setUsers([]);
-      }
+      setUsers(response.data);
     } catch (error) {
       console.error("Erreur chargement utilisateurs:", error);
       alert("Erreur lors du chargement des utilisateurs");
-      setUsers([]); // ✅ Toujours définir un tableau vide en cas d'erreur
     } finally {
       setLoading(false);
     }
@@ -327,7 +321,8 @@ export default function Users() {
       filiere: "",
       niveau: "Licence 3",
       dureeStage: 6,
-      poste: ""
+      poste: "",
+      encadreur: ""
     });
     setEditingUser(null);
     setShowModal(false);
@@ -355,8 +350,8 @@ export default function Users() {
     }
 
     // Vérification spécifique pour les stagiaires
-    if (form.role === "STAGIAIRE" && (!form.dureeStage || !form.poste)) {
-      alert("La durée du stage et le poste sont obligatoires pour un stagiaire");
+    if (form.role === "STAGIAIRE" && (!form.dureeStage || !form.encadreur)) {
+      alert("La durée du stage et l'encadreur sont obligatoires pour un stagiaire");
       return;
     }
 
@@ -387,7 +382,6 @@ export default function Users() {
         userData.matricule = form.matricule;
         userData.situationFamiliale = form.situationFamiliale;
         userData.nombreEnfants = form.nombreEnfants;
-        userData.poste = form.poste; // ✅ Ajout du poste pour salarié
       } 
       else if (form.role === "STAGIAIRE") {
         userData.ecole = form.ecole;
@@ -395,6 +389,7 @@ export default function Users() {
         userData.niveau = form.niveau;
         userData.dureeStage = parseInt(form.dureeStage);
         userData.poste = form.poste;
+        userData.encadreur = form.encadreur;
       }
 
       console.log("📤 Données envoyées:", userData);
@@ -409,16 +404,7 @@ export default function Users() {
         resetForm();
       } else {
         const response = await api.post("/users", userData);
-        
-        // ✅ CORRECTION : Gérer la nouvelle structure de réponse
-        if (response.data.success) {
-          // Nouvelle structure
-          setUsers(prevUsers => [...prevUsers, response.data.user]);
-        } else {
-          // Ancienne structure
-          setUsers(prevUsers => [...prevUsers, response.data]);
-        }
-        
+        setUsers(prevUsers => [...prevUsers, response.data.user]);
         alert("Utilisateur créé avec succès");
         resetForm();
       }
@@ -435,8 +421,6 @@ export default function Users() {
         alert("Ce matricule est déjà utilisé par un autre salarié");
       } else if (errorMessage.includes("Email déjà utilisé") || errorMessage.includes("email")) {
         alert("Cet email est déjà utilisé");
-      } else if (errorMessage.includes("poste") || errorMessage.includes("Poste")) {
-        alert(`Erreur: ${errorMessage}`);
       } else {
         alert(`Erreur: ${errorMessage}`);
       }
@@ -466,31 +450,47 @@ export default function Users() {
       filiere: user.filiere || "",
       niveau: user.niveau || "Licence 3",
       dureeStage: user.dureeStage || 6,
-      poste: user.poste || ""
+      poste: user.poste || "",
+      encadreur: user.encadreur || ""
     });
     setShowModal(true);
   };
 
   // Supprimer un utilisateur
   const handleDelete = async (user) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.nom} ${user.prenom} ?`)) {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.nom} ${user.prenom} ?\n\nCette action le désactivera mais conservera ses données.`)) {
       return;
     }
 
     try {
-      await api.delete(`/users/${user._id}`);
-      // Mettre à jour la liste localement
-      setUsers(prevUsers => prevUsers.filter(u => u._id !== user._id));
-      alert("Utilisateur supprimé avec succès");
+      console.log(`🗑️ Suppression de l'utilisateur: ${user._id}`);
+      
+      const response = await api.delete(`/users/${user._id}`);
+      
+      console.log("✅ Réponse suppression:", response.data);
+      
+      if (response.data.success) {
+        // Mettre à jour la liste localement
+        setUsers(prevUsers => prevUsers.filter(u => u._id !== user._id));
+        alert("Utilisateur supprimé (désactivé) avec succès");
+      } else {
+        alert(response.data.message || "Erreur lors de la suppression");
+      }
     } catch (error) {
-      console.error("Erreur suppression:", error);
-      alert("Erreur lors de la suppression");
+      console.error("❌ Erreur suppression:", error);
+      console.error("Détails erreur:", error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          "Erreur lors de la suppression";
+      
+      alert(`Erreur: ${errorMessage}`);
     }
   };
 
-  // Obtenir le nombre d'utilisateurs par rôle - UTILISER safeUsers
+  // Obtenir le nombre d'utilisateurs par rôle
   const getUserCountByRole = (role) => {
-    return safeUsers.filter(user => user.role === role).length;
+    return users.filter(user => user.role === role).length;
   };
 
   return (
@@ -541,7 +541,7 @@ export default function Users() {
       <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
         <div className="flex flex-wrap gap-1">
           {[
-            { key: 'tous', label: 'Tous les utilisateurs', count: safeUsers.length }, // ✅ safeUsers
+            { key: 'tous', label: 'Tous les utilisateurs', count: users.length },
             { key: 'SALARIE', label: 'Salariés', count: getUserCountByRole('SALARIE') },
             { key: 'STAGIAIRE', label: 'Stagiaires', count: getUserCountByRole('STAGIAIRE') },
             { key: 'ADMIN_RH', label: 'Admins RH', count: getUserCountByRole('ADMIN_RH') }
@@ -575,7 +575,7 @@ export default function Users() {
               Filtre actif : {activeTab === 'SALARIE' ? 'Salariés' : activeTab === 'STAGIAIRE' ? 'Stagiaires' : 'Admins RH'}
             </strong>
             <div className="text-sm text-blue-600 mt-1">
-              Affichage de {filteredUsers.length} utilisateur(s) sur {safeUsers.length} au total {/* ✅ safeUsers */}
+              Affichage de {filteredUsers.length} utilisateur(s) sur {users.length} au total
             </div>
           </div>
           <button
@@ -767,31 +767,6 @@ export default function Users() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
                       />
                     </div>
-
-                    {/* Poste pour salarié */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste</label>
-                      <select
-                        name="poste"
-                        value={form.poste}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
-                      >
-                        <option value="">Sélectionner un poste (optionnel)</option>
-                        {postes.length > 0 ? (
-                          postes.map((poste, index) => (
-                            <option key={index} value={poste}>
-                              {poste}
-                            </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>Aucun poste disponible</option>
-                        )}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Le poste permet de matcher automatiquement avec les stagiaires
-                      </p>
-                    </div>
                   </>
                 )}
 
@@ -857,33 +832,50 @@ export default function Users() {
                       />
                     </div>
 
-                    {/* Sélection du poste parmi ceux existants */}
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste *</label>
-                      <select
+                    {/* Champ poste optionnel pour stagiaire */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste</label>
+                      <input
+                        type="text"
                         name="poste"
                         value={form.poste}
+                        onChange={handleInputChange}
+                        placeholder="Poste optionnel"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Poste optionnel pour le stagiaire
+                      </p>
+                    </div>
+
+                    {/* Sélection de l'encadreur parmi les salariés disponibles */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Encadreur *</label>
+                      <select
+                        name="encadreur"
+                        value={form.encadreur}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
                       >
-                        <option value="">Sélectionner un poste</option>
-                        {postes.length > 0 ? (
-                          postes.map((poste, index) => (
-                            <option key={index} value={poste}>
-                              {poste}
+                        <option value="">Sélectionner un encadreur</option>
+                        {salariesDisponibles.length > 0 ? (
+                          salariesDisponibles.map((salarie) => (
+                            <option key={salarie._id} value={salarie._id}>
+                              {salarie.nom} {salarie.prenom} - {salarie.posteActuel} 
+                              {salarie.service ? ` (${salarie.service.nomService})` : ''}
                             </option>
                           ))
                         ) : (
-                          <option value="" disabled>Aucun poste disponible</option>
+                          <option value="" disabled>Aucun salarié disponible</option>
                         )}
                       </select>
                       <p className="text-xs text-gray-500 mt-1">
-                        {postes.length} poste(s) disponible(s) dans les services
+                        {salariesDisponibles.length} salarié(s) disponible(s) avec contrat actif
                       </p>
-                      {postes.length === 0 && (
+                      {salariesDisponibles.length === 0 && (
                         <p className="text-xs text-red-500 mt-1">
-                          ⚠️ Aucun poste disponible. Veuillez d'abord créer des services avec des postes.
+                          ⚠️ Aucun salarié disponible. Veuillez d'abord créer des salariés avec contrats actifs.
                         </p>
                       )}
                     </div>
@@ -1043,7 +1035,7 @@ export default function Users() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
           <div className="text-sm text-gray-600">Total utilisateurs</div>
-          <div className="text-2xl font-bold text-gray-800">{safeUsers.length}</div> {/* ✅ safeUsers */}
+          <div className="text-2xl font-bold text-gray-800">{users.length}</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">

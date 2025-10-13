@@ -312,7 +312,7 @@ const fetchSalarieStats = useCallback(async () => {
   }
 }, []);
 
-  // 🔹 STATISTIQUES POUR STAGIAIRE
+  // 🔹 STATISTIQUES POUR STAGIAIRE (SANS CONTRAT DE STAGE)
   const fetchStagiaireStats = useCallback(async () => {
     try {
       // Mes rapports
@@ -333,27 +333,14 @@ const fetchSalarieStats = useCallback(async () => {
         console.log("Chargement eligibility échoué:", error);
       }
 
-      // Mes contrats de stage
-      let mesContratsCount = 0;
-      try {
-        const contratsResponse = await api.get("/contrats/mes-contrats/moi");
-        const contratsActifs = contratsResponse.data.contrats || contratsResponse.data;
-        mesContratsCount = contratsActifs.filter(contrat => 
-          contrat.statut === "Actif"
-        ).length;
-      } catch (error) {
-        console.log("Chargement contrats stagiaire échoué:", error);
-      }
-
       // Calcul des jours restants
       let joursRestants = "0";
       try {
-        const contratsResponse = await api.get("/contrats/mes-contrats/moi");
-        const contrats = contratsResponse.data.contrats || contratsResponse.data;
-        if (contrats.length > 0) {
-          const contratActuel = contrats.find(c => c.statut === "Actif") || contrats[0];
-          if (contratActuel.dateFin) {
-            const dateFin = new Date(contratActuel.dateFin);
+        const stageResponse = await api.get("/stages/mon-stage");
+        if (stageResponse.data.success && stageResponse.data.stage) {
+          const stage = stageResponse.data.stage;
+          if (stage.dateFin) {
+            const dateFin = new Date(stage.dateFin);
             const aujourdHui = new Date();
             const diffTime = dateFin - aujourdHui;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -364,11 +351,23 @@ const fetchSalarieStats = useCallback(async () => {
         console.log("Calcul jours restants échoué:", error);
       }
 
+      // Tâches en cours
+      let tachesEnCours = "0";
+      try {
+        const tachesResponse = await api.get("/taches/mes-taches");
+        const tachesData = tachesResponse.data.taches || tachesResponse.data || [];
+        tachesEnCours = tachesData.filter(tache => 
+          tache.statut === 'EN_COURS' || tache.statut === 'A_FAIRE'
+        ).length.toString();
+      } catch (error) {
+        console.log("Chargement tâches échoué:", error);
+      }
+
       setStats([
         { label: 'Mes rapports', value: mesRapportsCount.toString(), color: 'bg-green-500', key: 'rapports', icon: '📋' },
         { label: 'Éligible attestation', value: eligibility, color: 'bg-blue-500', key: 'eligibility', icon: '✅' },
         { label: 'Jours restants', value: joursRestants, color: 'bg-orange-500', key: 'joursRestants', icon: '📅' },
-        { label: 'Contrat stage', value: mesContratsCount.toString(), color: 'bg-purple-500', key: 'contratStage', icon: '🎓' },
+        { label: 'Tâches en cours', value: tachesEnCours, color: 'bg-purple-500', key: 'taches', icon: '🎯' },
       ]);
 
     } catch (error) {
