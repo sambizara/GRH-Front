@@ -16,7 +16,6 @@ import Dashboard from "./pages/Dashboard";
 import Users from "./pages/admin/Users";
 import Contrats from "./pages/admin/Contrats";
 import Services from "./pages/admin/Service";
-import Presence from "./pages/admin/Presence";
 import Conges from "./pages/admin/Conges";
 import Attestations from "./pages/admin/Attestations";
 import Rapports from "./pages/admin/Rapport";
@@ -57,7 +56,6 @@ function App() {
             <Route path="users" element={<Users />} />
             <Route path="contrats" element={<Contrats />} />
             <Route path="service" element={<Services />} />
-            <Route path="presence" element={<Presence />} />
             <Route path="conges" element={<Conges />} />
             <Route path="stage" element={<Stages/>} />
             <Route path="attestations" element={<Attestations />} />

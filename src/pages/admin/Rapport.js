@@ -4,30 +4,121 @@ import api from "../../api/axiosConfig";
 export default function Rapports() {
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState('tous');
   const userRole = "ADMIN_RH"; // À adapter selon l'utilisateur connecté
 
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [rapportsPerPage, setRapportsPerPage] = useState(10);
+  const [rapportsPerPage] = useState(10);
 
   const [form, setForm] = useState({
     titre: "",
-    fichier: ""
+    fichier: null
   });
 
-  // Calculs pour la pagination
+  // Fonction pour générer les icônes Tailwind
+  const getIcon = (iconName, isLarge = false) => {
+    const iconClass = `w-5 h-5 ${isLarge ? 'w-6 h-6' : ''}`;
+    
+    switch(iconName) {
+      case '📘': // Rapports
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '🔍': // Recherche
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        );
+      case '➕': // Ajouter
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+      case '📥': // Télécharger
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '✅': // Publier
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '📁': // Archiver
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+        );
+      case '📝': // Brouillon
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+      case '📊': // Statistiques
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case '◀': // Précédent
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        );
+      case '▶': // Suivant
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        );
+      case '✕': // Fermer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      default:
+        return <span className={iconClass}>•</span>;
+    }
+  };
+
+  // Filtrer les rapports par statut et recherche
+  const getFilteredRapports = () => {
+    let filtered = rapports.filter(rapport =>
+      rapport.user?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rapport.user?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rapport.titre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rapport.statut?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (activeTab !== 'tous') {
+      filtered = filtered.filter(rapport => rapport.statut === activeTab);
+    }
+
+    return filtered;
+  };
+
+  const filteredRapports = getFilteredRapports();
   const indexOfLastRapport = currentPage * rapportsPerPage;
   const indexOfFirstRapport = indexOfLastRapport - rapportsPerPage;
-  const filteredRapports = rapports.filter(rapport =>
-    rapport.user?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rapport.user?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rapport.titre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rapport.statut?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
   const currentRapports = filteredRapports.slice(indexOfFirstRapport, indexOfLastRapport);
   const totalPages = Math.ceil(filteredRapports.length / rapportsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm]);
 
   // Fonctions de navigation
   const handleNextPage = () => {
@@ -53,11 +144,7 @@ export default function Rapports() {
   const fetchRapports = async () => {
     setLoading(true);
     try {
-      let endpoint = "/rapports";
-      // Si l'utilisateur est un stagiaire, il devrait voir seulement ses rapports
-      // if (userRole === "STAGIAIRE") {
-      //   endpoint = "/rapports/mes-rapports";
-      // }
+      const endpoint = "/rapports/all";
       const response = await api.get(endpoint);
       setRapports(response.data);
     } catch (error) {
@@ -69,17 +156,20 @@ export default function Rapports() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === "fichier" && files) {
+      setForm(prev => ({ ...prev, fichier: files[0] }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const resetForm = () => {
     setForm({
       titre: "",
-      fichier: ""
+      fichier: null
     });
-    setShowForm(false);
-    setCurrentPage(1);
+    setShowModal(false);
   };
 
   // Soumettre un rapport (pour les stagiaires)
@@ -92,7 +182,15 @@ export default function Rapports() {
     }
 
     try {
-      await api.post("/rapports", form);
+      const formData = new FormData();
+      formData.append('titre', form.titre);
+      formData.append('fichier', form.fichier);
+
+      await api.post("/rapports", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       alert("Rapport déposé avec succès");
       resetForm();
       fetchRapports();
@@ -114,281 +212,454 @@ export default function Rapports() {
     }
   };
 
-  // Télécharger un rapport
-  const telechargerRapport = (fichierUrl) => {
-    if (fichierUrl) {
-      window.open(fichierUrl, '_blank');
-    } else {
-      alert("Aucun fichier disponible");
+  // Télécharger via l'API
+  const telechargerRapport = async (rapportId) => {
+    try {
+      const response = await api.get(`/rapports/download/${rapportId}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = 'rapport.pdf';
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (fileNameMatch && fileNameMatch.length === 2) {
+          fileName = fileNameMatch[1];
+        }
+      }
+      
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erreur téléchargement:", error);
+      alert("Erreur lors du téléchargement du rapport");
     }
   };
 
-  // Fonction pour obtenir le style du statut
-  const getStatutStyle = (statut) => {
+  // Fonction pour obtenir la classe du statut
+  const getStatutClass = (statut) => {
     switch (statut) {
       case "Publié":
-        return { background: "#2ecc71", color: "white" };
+        return "bg-green-100 text-green-800 border border-green-200";
       case "Archivé":
-        return { background: "#95a5a6", color: "white" };
+        return "bg-gray-100 text-gray-800 border border-gray-200";
       case "Brouillon":
-        return { background: "#f39c12", color: "white" };
+        return "bg-yellow-100 text-yellow-800 border border-yellow-200";
       default:
-        return { background: "#bdc3c7", color: "white" };
+        return "bg-gray-100 text-gray-800 border border-gray-200";
+    }
+  };
+
+  // Obtenir les statistiques
+  const getStats = () => {
+    const total = rapports.length;
+    const brouillons = rapports.filter(r => r.statut === "Brouillon").length;
+    const publies = rapports.filter(r => r.statut === "Publié").length;
+    const archives = rapports.filter(r => r.statut === "Archivé").length;
+
+    return { total, brouillons, publies, archives };
+  };
+
+  const stats = getStats();
+
+  // Fonction pour déterminer les colonnes à afficher
+  const getTableHeaders = () => {
+    return [
+      { key: 'stagiaire', label: 'Stagiaire' },
+      { key: 'titre', label: 'Titre' },
+      { key: 'fichier', label: 'Fichier' },
+      { key: 'date', label: 'Date dépôt' },
+      { key: 'statut', label: 'Statut' },
+      { key: 'actions', label: 'Actions' }
+    ];
+  };
+
+  // Fonction pour afficher le contenu des cellules
+  const renderCellContent = (rapport, columnKey) => {
+    switch (columnKey) {
+      case 'stagiaire':
+        return (
+          <div>
+            <div className="font-medium text-gray-900">
+              {rapport.user ? `${rapport.user.nom} ${rapport.user.prenom}` : "-"}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              <div>
+                {rapport.user?.role}
+                {rapport.user?.service?.nomService && ` • ${rapport.user.service.nomService}`}
+              </div>
+              {rapport.user?.poste && (
+                <div className="mt-1 flex items-center gap-1">
+                  {getIcon('📝')}
+                  {rapport.user.poste}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'titre':
+        return (
+          <div className="font-medium text-gray-900">
+            {rapport.titre}
+          </div>
+        );
+
+      case 'fichier':
+        return rapport.fichier ? (
+          <button
+            onClick={() => telechargerRapport(rapport._id)}
+            className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors border border-green-300"
+          >
+            {getIcon('📥')}
+            Télécharger
+          </button>
+        ) : (
+          <span className="text-gray-400 italic">Aucun fichier</span>
+        );
+
+      case 'date':
+        return (
+          <div className="text-sm text-gray-600">
+            {new Date(rapport.dateDepot).toLocaleDateString('fr-FR')}
+          </div>
+        );
+
+      case 'statut':
+        return (
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatutClass(rapport.statut)}`}>
+            {rapport.statut}
+          </span>
+        );
+
+      case 'actions':
+        return (
+          <div className="flex gap-2 justify-center">
+            {/* Actions pour ADMIN_RH */}
+            {userRole === "ADMIN_RH" && (
+              <>
+                {rapport.statut !== "Publié" && (
+                  <button
+                    onClick={() => updateStatut(rapport._id, "Publié")}
+                    className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors border border-red-300"
+                  >
+                    {getIcon('✅')}
+                    Publier
+                  </button>
+                )}
+                {rapport.statut !== "Archivé" && (
+                  <button
+                    onClick={() => updateStatut(rapport._id, "Archivé")}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors border border-gray-300"
+                  >
+                    {getIcon('📁')}
+                    Archiver
+                  </button>
+                )}
+                {rapport.statut !== "Brouillon" && (
+                  <button
+                    onClick={() => updateStatut(rapport._id, "Brouillon")}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                  >
+                    {getIcon('📝')}
+                    Brouillon
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        );
+
+      default:
+        return "-";
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Indicateur de chargement */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-800"></div>
+              <span>Chargement...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* En-tête avec bouton d'ajout et recherche */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "30px",
-        flexWrap: "wrap",
-        gap: "15px"
-      }}>
-        <h1 style={{ margin: 0, color: "#2c3e50" }}>📘 Gestion des Rapports</h1>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          {getIcon('📘', true)}
+          <h1 className="text-2xl font-bold text-gray-800">Gestion des Rapports</h1>
+        </div>
         
-        <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
           {/* Barre de recherche */}
-          <div style={{ position: "relative" }}>
+          <div className="relative">
             <input
               type="text"
-              placeholder="Rechercher un rapport..."
+              placeholder="Rechercher par stagiaire, titre, statut..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "10px 40px 10px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                width: "250px",
-                fontSize: "14px"
-              }}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            <span style={{
-              position: "absolute",
-              right: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#7f8c8d"
-            }}>
-              🔍
-            </span>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {getIcon('🔍')}
+            </div>
           </div>
 
           {/* Bouton Déposer un rapport (seulement pour les stagiaires) */}
           {userRole === "STAGIAIRE" && (
             <button
-              onClick={() => setShowForm(true)}
-              style={{
-                background: "#27ae60",
-                color: "white",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px"
-              }}
+              onClick={() => setShowModal(true)}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
             >
-              ➕ Déposer un rapport
+              {getIcon('➕')}
+              Déposer un rapport
             </button>
           )}
         </div>
       </div>
 
-      {/* Formulaire de dépôt de rapport (seulement pour les stagiaires) */}
-      {showForm && userRole === "STAGIAIRE" && (
-        <div style={{
-          background: "#f8f9fa",
-          padding: "25px",
-          borderRadius: "10px",
-          marginBottom: "30px",
-          border: "1px solid #e9ecef"
-        }}>
-          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "#2c3e50" }}>
-            📝 Déposer un nouveau rapport
-          </h3>
-          
-          <form onSubmit={handleSubmit} style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: "15px",
-            maxWidth: "500px"
-          }}>
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Titre du rapport *</label>
-              <input
-                type="text"
-                name="titre"
-                value={form.titre}
-                onChange={handleInputChange}
-                placeholder="Titre du rapport..."
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-            </div>
+      {/* Statistiques */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📊')}
+            Total rapports
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📝')}
+            Brouillons
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.brouillons}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('✅')}
+            Publiés
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.publies}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📁')}
+            Archivés
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.archives}</div>
+        </div>
+      </div>
 
-            <div>
-              <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>Lien du fichier *</label>
-              <input
-                type="url"
-                name="fichier"
-                value={form.fichier}
-                onChange={handleInputChange}
-                placeholder="https://example.com/rapport.pdf"
-                required
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
-              />
-              <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
-                🔗 Collez le lien vers votre rapport (Google Drive, Dropbox, etc.)
+      {/* Onglets de navigation */}
+      <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap gap-1">
+          {[
+            { key: 'tous', label: 'Tous les rapports', count: stats.total, icon: '📊' },
+            { key: 'Brouillon', label: 'Brouillons', count: stats.brouillons, icon: '📝' },
+            { key: 'Publié', label: 'Publiés', count: stats.publies, icon: '✅' },
+            { key: 'Archivé', label: 'Archivés', count: stats.archives, icon: '📁' }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 min-w-[150px] px-4 py-3 rounded-md transition-all ${
+                activeTab === tab.key 
+                  ? 'bg-gray-600 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              } font-medium flex items-center justify-center gap-2`}
+            >
+              {getIcon(tab.icon)}
+              {tab.label}
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === tab.key ? 'bg-white bg-opacity-20' : 'bg-gray-200'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Indicateur de filtre actif */}
+      {activeTab !== 'tous' && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <div className="text-gray-600">
+            {getIcon('🔍')}
+          </div>
+          <div>
+            <strong className="text-gray-800">
+              Filtre actif : {
+                activeTab === 'Brouillon' ? 'Brouillons' :
+                activeTab === 'Publié' ? 'Publiés' : 'Archivés'
+              }
+            </strong>
+            <div className="text-sm text-gray-600 mt-1">
+              Affichage de {filteredRapports.length} rapport(s) sur {rapports.length} au total
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('tous')}
+            className="ml-auto border border-gray-600 text-gray-600 px-3 py-1 rounded text-sm font-medium hover:bg-gray-600 hover:text-white transition-colors flex items-center gap-1"
+          >
+            {getIcon('✕')}
+            Supprimer le filtre
+          </button>
+        </div>
+      )}
+
+      {/* Modal de dépôt de rapport */}
+      {showModal && userRole === "STAGIAIRE" && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            {/* En-tête du modal */}
+            <div className="bg-gray-600 text-white px-6 py-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {getIcon('➕')}
+                  Déposer un nouveau rapport
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="text-white hover:text-gray-200 text-2xl font-bold"
+                >
+                  {getIcon('✕')}
+                </button>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  background: "#95a5a6",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                style={{
-                  background: "#3498db",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
-              >
-                Déposer le rapport
-              </button>
+            {/* Contenu du modal */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Titre du rapport *
+                  </label>
+                  <input
+                    type="text"
+                    name="titre"
+                    value={form.titre}
+                    onChange={handleInputChange}
+                    placeholder="Titre du rapport..."
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fichier *
+                  </label>
+                  <input
+                    type="file"
+                    name="fichier"
+                    onChange={handleInputChange}
+                    accept=".pdf,.doc,.docx,.txt"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    {getIcon('📎')}
+                    Formats acceptés: PDF, DOC, DOCX, TXT
+                  </div>
+                </div>
+
+                {/* Boutons d'action */}
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                  >
+                    Déposer le rapport
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {filteredRapports.length > 0 && (
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "15px 20px",
-          background: "#f8f9fa",
-          border: "1px solid #e9ecef",
-          borderRadius: "8px",
-          marginBottom: "20px"
-        }}>
-          <div style={{ color: "#6c757d", fontSize: "14px" }}>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-600 text-sm flex items-center gap-2">
+            {getIcon('📊')}
             Affichage de {indexOfFirstRapport + 1} à {Math.min(indexOfLastRapport, filteredRapports.length)} sur {filteredRapports.length} rapport(s)
           </div>
           
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {/* Bouton Précédent */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === 1 ? "#f8f9fa" : "white",
-                color: currentPage === 1 ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              ◀ Précédent
+              {getIcon('◀')}
+              Précédent
             </button>
 
-            {/* Numéros de page */}
-            <div style={{ display: "flex", gap: "4px" }}>
+            <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "1px solid #dee2e6",
-                    background: currentPage === page ? "#007bff" : "white",
-                    color: currentPage === page ? "white" : "#007bff",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    minWidth: "40px"
-                  }}
+                  className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
+                    currentPage === page 
+                      ? 'bg-gray-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
 
-            {/* Bouton Suivant */}
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #dee2e6",
-                background: currentPage === totalPages ? "#f8f9fa" : "white",
-                color: currentPage === totalPages ? "#6c757d" : "#007bff",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
+              className={`px-3 py-1 border border-gray-300 rounded text-sm flex items-center gap-1 ${
+                currentPage === totalPages 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              Suivant ▶
+              Suivant
+              {getIcon('▶')}
             </button>
           </div>
 
-          {/* Sélecteur d'éléments par page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", color: "#6c757d" }}>Rapports par page:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Rapports par page:</span>
             <select
               value={rapportsPerPage}
-              onChange={(e) => {
-                setRapportsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #dee2e6",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
+              onChange={(e) => setCurrentPage(1)}
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -401,230 +672,49 @@ export default function Rapports() {
       )}
 
       {/* Tableau des rapports */}
-      <div style={{
-        background: "white",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
-      }}>
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            Chargement des rapports...
-          </div>
-        ) : filteredRapports.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#7f8c8d" }}>
-            {searchTerm ? "Aucun rapport trouvé" : "Aucun rapport déposé"}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {filteredRapports.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            {searchTerm || activeTab !== 'tous' 
+              ? `Aucun rapport trouvé ${activeTab !== 'tous' ? `pour les ${activeTab === 'Brouillon' ? 'rapports brouillons' : activeTab === 'Publié' ? 'rapports publiés' : 'rapports archivés'}` : ''}`
+              : "Aucun rapport déposé"
+            }
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: "#34495e", color: "white" }}>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Stagiaire</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Titre</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Fichier</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Date dépôt</th>
-                  <th style={{ padding: "15px", textAlign: "left", fontSize: "14px" }}>Statut</th>
-                  <th style={{ padding: "15px", textAlign: "center", fontSize: "14px" }}>Actions</th>
+                <tr className="bg-gray-600 text-white">
+                  {getTableHeaders().map(header => (
+                    <th 
+                      key={header.key}
+                      className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
+                    >
+                      {header.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {currentRapports.map((rapport, index) => (
                   <tr 
                     key={rapport._id}
-                    style={{ 
-                      background: index % 2 === 0 ? "#f8f9fa" : "white",
-                      borderBottom: "1px solid #e9ecef"
-                    }}
+                    className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
                   >
-                    <td style={{ padding: "15px" }}>
-                      <div style={{ fontWeight: "500" }}>
-                        {rapport.user ? `${rapport.user.nom} ${rapport.user.prenom}` : "-"}
-                      </div>
-                      <div style={{ fontSize: "12px", color: "#7f8c8d", marginTop: "5px" }}>
-                        {rapport.user?.role}
-                        {rapport.user?.service?.nomService && ` • ${rapport.user.service.nomService}`}
-                        {rapport.user?.poste && (
-                          <div style={{ marginTop: "2px" }}>
-                            📝 {rapport.user.poste}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: "15px", fontWeight: "500" }}>
-                      {rapport.titre}
-                    </td>
-                    <td style={{ padding: "15px" }}>
-                      {rapport.fichier ? (
-                        <button
-                          onClick={() => telechargerRapport(rapport.fichier)}
-                          style={{
-                            background: "#3498db",
-                            color: "white",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px"
-                          }}
-                        >
-                          📄 Télécharger
-                        </button>
-                      ) : (
-                        <span style={{ color: "#bdc3c7", fontStyle: "italic" }}>Aucun fichier</span>
-                      )}
-                    </td>
-                    <td style={{ padding: "15px", color: "#7f8c8d" }}>
-                      {new Date(rapport.dateDepot).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td style={{ padding: "15px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        ...getStatutStyle(rapport.statut)
-                      }}>
-                        {rapport.statut}
-                      </span>
-                    </td>
-                    <td style={{ padding: "15px", textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
-                        {/* Actions pour ADMIN_RH */}
-                        {userRole === "ADMIN_RH" && (
-                          <>
-                            {rapport.statut !== "Publié" && (
-                              <button
-                                onClick={() => updateStatut(rapport._id, "Publié")}
-                                style={{
-                                  background: "#2ecc71",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "6px 12px",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontSize: "12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}
-                              >
-                                ✅ Publier
-                              </button>
-                            )}
-                            {rapport.statut !== "Archivé" && (
-                              <button
-                                onClick={() => updateStatut(rapport._id, "Archivé")}
-                                style={{
-                                  background: "#95a5a6",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "6px 12px",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontSize: "12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}
-                              >
-                                📁 Archiver
-                              </button>
-                            )}
-                            {rapport.statut !== "Brouillon" && (
-                              <button
-                                onClick={() => updateStatut(rapport._id, "Brouillon")}
-                                style={{
-                                  background: "#f39c12",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "6px 12px",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontSize: "12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}
-                              >
-                                📝 Brouillon
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
+                    {getTableHeaders().map(header => (
+                      <td 
+                        key={header.key}
+                        className="px-4 py-3 text-sm border-t border-gray-200"
+                      >
+                        {renderCellContent(rapport, header.key)}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </div>
-
-      {/* Statistiques */}
-      <div style={{
-        marginTop: "20px",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{
-          background: "#3498db",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Total rapports</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>{rapports.length}</div>
-        </div>
-        
-        <div style={{
-          background: "#f39c12",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Brouillons</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {rapports.filter(r => r.statut === "Brouillon").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#2ecc71",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Publiés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {rapports.filter(r => r.statut === "Publié").length}
-          </div>
-        </div>
-        
-        <div style={{
-          background: "#95a5a6",
-          color: "white",
-          padding: "15px",
-          borderRadius: "6px",
-          flex: "1",
-          minWidth: "150px"
-        }}>
-          <div style={{ fontSize: "12px", opacity: 0.9 }}>Archivés</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            {rapports.filter(r => r.statut === "Archivé").length}
-          </div>
-        </div>
       </div>
     </div>
   );

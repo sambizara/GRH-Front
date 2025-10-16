@@ -12,6 +12,9 @@ export default function Conges() {
   const [currentPage, setCurrentPage] = useState(1);
   const [congesPerPage, setCongesPerPage] = useState(10);
 
+  // État pour les onglets
+  const [activeTab, setActiveTab] = useState('en-attente');
+
   const [form, setForm] = useState({
     typeConge: "Annuel",
     dateDebut: new Date().toISOString().split('T')[0],
@@ -19,16 +22,121 @@ export default function Conges() {
     motif: ""
   });
 
+  // Fonction pour générer les icônes Tailwind
+  const getIcon = (iconName, isLarge = false) => {
+    const iconClass = `w-5 h-5 ${isLarge ? 'w-6 h-6' : ''}`;
+    
+    switch(iconName) {
+      case '📅': // Congés / Calendrier
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case '🔍': // Recherche
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        );
+      case '➕': // Ajouter
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+      case '✅': // Approuver
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '❌': // Rejeter
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '🗑️': // Supprimer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        );
+      case '📝': // Modifier / Formulaire
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+      case '📊': // Statistiques
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case '◀': // Précédent
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        );
+      case '▶': // Suivant
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        );
+      case '✕': // Fermer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      case '⏳': // En attente
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '📋': // Tous
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        );
+      default:
+        return <span className={iconClass}>•</span>;
+    }
+  };
+
+  // Fonction pour filtrer les congés selon l'onglet actif
+  const getFilteredConges = () => {
+    let filtered = conges.filter(conge =>
+      conge.user?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conge.user?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conge.typeConge?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conge.statut?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conge.motif?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Filtrage par onglet
+    if (activeTab === 'en-attente') {
+      filtered = filtered.filter(conge => conge.statut === "En Attente");
+    } else if (activeTab === 'approuves') {
+      filtered = filtered.filter(conge => conge.statut === "Approuvé");
+    } else if (activeTab === 'rejetes') {
+      filtered = filtered.filter(conge => conge.statut === "Rejeté");
+    }
+    // 'tous' affiche tous les congés sans filtre supplémentaire
+
+    return filtered;
+  };
+
   // Calculs pour la pagination
+  const filteredConges = getFilteredConges();
   const indexOfLastConge = currentPage * congesPerPage;
   const indexOfFirstConge = indexOfLastConge - congesPerPage;
-  const filteredConges = conges.filter(conge =>
-    conge.user?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conge.user?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conge.typeConge?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conge.statut?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conge.motif?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
   const currentConges = filteredConges.slice(indexOfFirstConge, indexOfLastConge);
   const totalPages = Math.ceil(filteredConges.length / congesPerPage);
 
@@ -48,6 +156,11 @@ export default function Conges() {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
+  // Réinitialiser la page quand on change d'onglet ou de recherche
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeTab]);
 
   useEffect(() => {
     fetchConges();
@@ -136,22 +249,6 @@ export default function Conges() {
     }
   };
 
-  // Supprimer un congé
-  const handleDelete = async (conge) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la demande de congé de ${conge.user?.nom} ${conge.user?.prenom} ?`)) {
-      return;
-    }
-
-    try {
-      await api.delete(`/conges/${conge._id}`);
-      alert("Congé supprimé avec succès");
-      fetchConges();
-    } catch (error) {
-      console.error("❌ Erreur suppression:", error);
-      alert(`Erreur lors de la suppression: ${error.response?.data?.message || error.message}`);
-    }
-  };
-
   // Fonction pour obtenir la classe du statut
   const getStatutClass = (statut) => {
     switch (statut) {
@@ -170,7 +267,7 @@ export default function Conges() {
   const getTypeCongeClass = (typeConge) => {
     switch (typeConge) {
       case "Annuel":
-        return "bg-blue-500 text-white";
+        return "bg-gray-500 text-white";
       case "Maladie":
         return "bg-red-500 text-white";
       case "Sans Solde":
@@ -200,7 +297,10 @@ export default function Conges() {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* En-tête avec bouton d'ajout et recherche */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">📅 Gestion des Congés</h1>
+        <div className="flex items-center gap-3">
+          {getIcon('📅', true)}
+          <h1 className="text-2xl font-bold text-gray-800">Gestion des Congés</h1>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           {/* Barre de recherche */}
@@ -210,20 +310,20 @@ export default function Conges() {
               placeholder="Rechercher un congé..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
             />
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {getIcon('🔍')}
+            </div>
           </div>
 
           {/* Bouton Demander un congé (seulement pour les salariés) */}
           {userRole === "SALARIE" && (
             <button
               onClick={handleAddConge}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
             >
-              <span>➕</span>
+              {getIcon('➕')}
               Demander un congé
             </button>
           )}
@@ -234,16 +334,17 @@ export default function Conges() {
       {showModal && userRole === "SALARIE" && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="bg-gray-800 text-white px-6 py-4">
+            <div className="bg-gray-600 text-white px-6 py-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
-                  📝 Nouvelle demande de congé
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {getIcon('📝')}
+                  Nouvelle demande de congé
                 </h2>
                 <button
                   onClick={resetForm}
-                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                  className="text-white hover:text-gray-200"
                 >
-                  ×
+                  {getIcon('✕')}
                 </button>
               </div>
             </div>
@@ -257,7 +358,7 @@ export default function Conges() {
                     value={form.typeConge}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 bg-white"
                   >
                     <option value="Annuel">Annuel</option>
                     <option value="Maladie">Maladie</option>
@@ -275,7 +376,7 @@ export default function Conges() {
                     value={form.dateDebut}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
 
@@ -287,7 +388,7 @@ export default function Conges() {
                     value={form.dateFin}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
 
@@ -299,7 +400,7 @@ export default function Conges() {
                     onChange={handleInputChange}
                     placeholder="Raison de la demande de congé..."
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 resize-vertical"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 resize-vertical"
                   />
                 </div>
 
@@ -313,7 +414,7 @@ export default function Conges() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
                   >
                     Soumettre la demande
                   </button>
@@ -324,10 +425,100 @@ export default function Conges() {
         </div>
       )}
 
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📊')}
+            Total demandes
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('⏳')}
+            En attente
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.enAttente}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('✅')}
+            Approuvés
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.approuves}</div>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('❌')}
+            Rejetés
+          </div>
+          <div className="text-2xl font-bold text-gray-800">{stats.rejetes}</div>
+        </div>
+      </div>
+
+      {/* Onglets de navigation */}
+      <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap gap-1">
+          {[
+            { key: 'tous', label: 'Tous les congés', count: stats.total, icon: '📋' },
+            { key: 'en-attente', label: 'En attente', count: stats.enAttente, icon: '⏳' },
+            { key: 'approuves', label: 'Approuvés', count: stats.approuves, icon: '✅' },
+            { key: 'rejetes', label: 'Rejetés', count: stats.rejetes, icon: '❌' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 min-w-[150px] px-4 py-3 rounded-md transition-all ${
+                activeTab === tab.key 
+                  ? 'bg-gray-600 text-white shadow-sm' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              } font-medium flex items-center justify-center gap-2`}
+            >
+              {getIcon(tab.icon)}
+              {tab.label}
+              <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                activeTab === tab.key ? 'bg-white bg-opacity-20' : 'bg-gray-200'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Indicateur de filtre actif */}
+      {activeTab !== 'tous' && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <div className="text-gray-600">
+            {getIcon('🔍')}
+          </div>
+          <div>
+            <strong className="text-gray-800">
+              Filtre actif : {activeTab === 'en-attente' ? 'Congés en attente' : activeTab === 'approuves' ? 'Congés approuvés' : 'Congés rejetés'}
+            </strong>
+            <div className="text-sm text-gray-600 mt-1">
+              Affichage de {filteredConges.length} congé(s) sur {conges.length} au total
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('tous')}
+            className="ml-auto border border-gray-600 text-gray-600 px-3 py-1 rounded text-sm font-medium hover:bg-gray-600 hover:text-white transition-colors flex items-center gap-1"
+          >
+            {getIcon('✕')}
+            Supprimer le filtre
+          </button>
+        </div>
+      )}
+
       {/* Pagination */}
       {filteredConges.length > 0 && (
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-gray-600 text-sm">
+          <div className="text-gray-600 text-sm flex items-center gap-2">
+            {getIcon('📊')}
             Affichage de {indexOfFirstConge + 1} à {Math.min(indexOfLastConge, filteredConges.length)} sur {filteredConges.length} congé(s)
           </div>
           
@@ -341,7 +532,8 @@ export default function Conges() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              ◀ Précédent
+              {getIcon('◀')}
+              Précédent
             </button>
 
             <div className="flex gap-1">
@@ -351,7 +543,7 @@ export default function Conges() {
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
                     currentPage === page 
-                      ? 'bg-gray-800 text-white' 
+                      ? 'bg-gray-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -369,7 +561,8 @@ export default function Conges() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Suivant ▶
+              Suivant
+              {getIcon('▶')}
             </button>
           </div>
 
@@ -381,7 +574,7 @@ export default function Conges() {
                 setCongesPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -404,13 +597,16 @@ export default function Conges() {
           </div>
         ) : filteredConges.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
-            {searchTerm ? "Aucun congé trouvé" : "Aucun congé enregistré"}
+            {searchTerm || activeTab !== 'tous' 
+              ? `Aucun congé trouvé ${activeTab !== 'tous' ? `pour les ${activeTab === 'en-attente' ? 'congés en attente' : activeTab === 'approuves' ? 'congés approuvés' : 'congés rejetés'}` : ''}`
+              : "Aucun congé enregistré"
+            }
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr className="bg-gray-600 text-white">
                   <th className="px-4 py-3 text-left text-sm font-semibold">Employé</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Date début</th>
@@ -436,8 +632,9 @@ export default function Conges() {
                           {conge.user?.service?.nomService ? ` • ${conge.user.service.nomService}` : " • Aucun service"}
                         </div>
                         {conge.user?.poste && (
-                          <div className="mt-1">
-                            📝 {conge.user.poste}
+                          <div className="mt-1 flex items-center gap-1">
+                            {getIcon('📝')}
+                            {conge.user.poste}
                           </div>
                         )}
                       </div>
@@ -463,36 +660,26 @@ export default function Conges() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-center">
-                        {/* Actions pour ADMIN_RH */}
+                        {/* Actions pour ADMIN_RH - seulement pour les congés en attente */}
                         {userRole === "ADMIN_RH" && conge.statut === "En Attente" && (
                           <>
                             <button
                               onClick={() => updateStatut(conge._id, "Approuvé")}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                              className="bg-green-100 hover:bg-green-200 text-green-700 border border-green-300 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                             >
-                              <span>✅</span>
+                              {getIcon('✅')}
                               Approuver
                             </button>
                             <button
                               onClick={() => updateStatut(conge._id, "Rejeté")}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                              className="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
                             >
-                              <span>❌</span>
+                              {getIcon('❌')}
                               Rejeter
                             </button>
                           </>
                         )}
-                        
-                        {/* Bouton supprimer */}
-                        {(userRole === "ADMIN_RH" || (userRole === "SALARIE" && conge.statut === "En Attente")) && (
-                          <button
-                            onClick={() => handleDelete(conge)}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
-                          >
-                            <span>🗑️</span>
-                            Supprimer
-                          </button>
-                        )}
+                        {/* Aucun bouton de suppression affiché */}
                       </div>
                     </td>
                   </tr>
@@ -501,29 +688,6 @@ export default function Conges() {
             </table>
           </div>
         )}
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <div className="bg-blue-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="text-sm opacity-90">Total demandes</div>
-          <div className="text-2xl font-bold">{stats.total}</div>
-        </div>
-        
-        <div className="bg-yellow-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="text-sm opacity-90">En attente</div>
-          <div className="text-2xl font-bold">{stats.enAttente}</div>
-        </div>
-        
-        <div className="bg-green-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="text-sm opacity-90">Approuvés</div>
-          <div className="text-2xl font-bold">{stats.approuves}</div>
-        </div>
-        
-        <div className="bg-red-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="text-sm opacity-90">Rejetés</div>
-          <div className="text-2xl font-bold">{stats.rejetes}</div>
-        </div>
       </div>
     </div>
   );

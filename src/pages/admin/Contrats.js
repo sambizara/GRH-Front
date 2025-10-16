@@ -45,6 +45,106 @@ export default function Contrats() {
     service: ""
   });
 
+  // Fonction pour générer les icônes Tailwind
+  const getIcon = (iconName, isLarge = false) => {
+    const iconClass = `w-5 h-5 ${isLarge ? 'w-6 h-6' : ''}`;
+    
+    switch(iconName) {
+      case '📄': // PDF / Contrats
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '🔔': // Alertes
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-3.78-4.26A2 2 0 114 4.75a9.97 9.97 0 005.24 8.56 2 2 0 111.52 0 9.97 9.97 0 005.24-8.56 2 2 0 11-2.46 2.35 5.97 5.97 0 01-3.78 4.26L10 14l-.76-5.44z" />
+          </svg>
+        );
+      case '➕': // Ajouter
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+      case '🔍': // Recherche
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        );
+      case '✏️': // Modifier
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+      case '🗑️': // Supprimer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        );
+      case '📊': // Statistiques
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case '🔄': // Actualiser
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
+      case '◀': // Précédent
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        );
+      case '▶': // Suivant
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        );
+      case '✕': // Fermer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      case '🚨': // Urgent
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        );
+      case '⚠️': // Avertissement
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '📅': // Calendrier
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case '🎉': // Succès
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        );
+      default:
+        return <span className={iconClass}>•</span>;
+    }
+  };
+
   // Fonctions de filtrage et pagination
   const getFilteredContrats = () => {
     let filtered = contrats.filter(contrat => {
@@ -473,7 +573,7 @@ export default function Contrats() {
             setError(null);
             fetchContrats();
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
         >
           Réessayer
         </button>
@@ -493,7 +593,7 @@ export default function Contrats() {
             onClick={() => setShowExpiringModal(true)}
             className="relative bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            <span>🔔</span>
+            {getIcon('🔔')}
             Alertes Contrats
             {expirationStats.totalExpirant > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
@@ -507,7 +607,7 @@ export default function Contrats() {
             onClick={downloadContratsListPDF}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            <span>📄</span>
+            {getIcon('📄')}
             Exporter PDF
           </button>
 
@@ -518,18 +618,18 @@ export default function Contrats() {
               placeholder="Rechercher par nom, prénom ou matricule..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
             />
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {getIcon('🔍')}
+            </div>
           </div>
 
           <button
             onClick={handleAddContrat}
-            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            <span>+</span>
+            {getIcon('➕')}
             Nouveau contrat
           </button>
         </div>
@@ -539,16 +639,17 @@ export default function Contrats() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="bg-gray-800 text-white px-6 py-4">
+            <div className="bg-gray-600 text-white px-6 py-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {getIcon(editingContrat ? '✏️' : '➕')}
                   {editingContrat ? "Modifier le contrat" : "Ajouter un nouveau contrat"}
                 </h2>
                 <button
                   onClick={resetForm}
-                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                  className="text-white hover:text-gray-200"
                 >
-                  ×
+                  {getIcon('✕')}
                 </button>
               </div>
             </div>
@@ -562,7 +663,7 @@ export default function Contrats() {
                     value={form.user}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   >
                     <option value="">Sélectionner un utilisateur</option>
                     {users.map(user => (
@@ -580,7 +681,7 @@ export default function Contrats() {
                     value={form.service}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   >
                     <option value="">Sélectionner un service</option>
                     {services.map(service => (
@@ -599,7 +700,7 @@ export default function Contrats() {
                     onChange={handleInputChange}
                     required={form.typeContrat !== "Stage"}
                     disabled={!form.service}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   >
                     <option value="">
                       {!form.service 
@@ -632,7 +733,7 @@ export default function Contrats() {
                       value={form.poste === "Autre" ? "" : form.poste}
                       onChange={(e) => setForm(prev => ({ ...prev, poste: e.target.value }))}
                       placeholder="Entrez le nom du poste..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                     />
                   </div>
                 )}
@@ -644,7 +745,7 @@ export default function Contrats() {
                     value={form.typeContrat}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   >
                     <option value="CDI">CDI</option>
                     <option value="CDD">CDD</option>
@@ -660,7 +761,7 @@ export default function Contrats() {
                     value={form.dateDebut}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
 
@@ -674,7 +775,7 @@ export default function Contrats() {
                     value={form.dateFin}
                     onChange={handleInputChange}
                     required={form.typeContrat === "CDD"}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                   {form.typeContrat === "CDD" && !form.dateFin && (
                     <div className="text-xs text-red-500 mt-1">
@@ -690,7 +791,7 @@ export default function Contrats() {
                     value={form.statut}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   >
                     <option value="Actif">Actif</option>
                     <option value="Terminé">Terminé</option>
@@ -709,7 +810,7 @@ export default function Contrats() {
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
 
@@ -723,7 +824,7 @@ export default function Contrats() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
                   >
                     {editingContrat ? "Modifier" : "Créer"}
                   </button>
@@ -741,8 +842,9 @@ export default function Contrats() {
             <div className="bg-orange-500 text-white px-6 py-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-semibold">
-                    🔔 Alertes - Contrats arrivant à expiration
+                  <h3 className="text-xl font-semibold flex items-center gap-2">
+                    {getIcon('🔔')}
+                    Alertes - Contrats arrivant à expiration
                   </h3>
                   <p className="text-orange-100 text-sm">
                     Surveillance automatique des contrats arrivant à expiration
@@ -751,16 +853,17 @@ export default function Contrats() {
                 <div className="flex gap-2">
                   <button
                     onClick={forceCheckNotifications}
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
                     title="Forcer la vérification"
                   >
-                    🔄 Vérifier
+                    {getIcon('🔄')}
+                    Vérifier
                   </button>
                   <button
                     onClick={() => setShowExpiringModal(false)}
-                    className="text-white hover:text-orange-200 text-2xl font-bold"
+                    className="text-white hover:text-orange-200"
                   >
-                    ×
+                    {getIcon('✕')}
                   </button>
                 </div>
               </div>
@@ -784,10 +887,10 @@ export default function Contrats() {
                   <div className="text-sm text-yellow-800 font-medium">Expire dans 30 jours</div>
                   <div className="text-xs text-yellow-600 mt-1">Information</div>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{expirationStats.totalExpirant}</div>
-                  <div className="text-sm text-blue-800 font-medium">Total à expirer</div>
-                  <div className="text-xs text-blue-600 mt-1">Prochain 30 jours</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-600">{expirationStats.totalExpirant}</div>
+                  <div className="text-sm text-gray-800 font-medium">Total à expirer</div>
+                  <div className="text-xs text-gray-600 mt-1">Prochain 30 jours</div>
                 </div>
               </div>
 
@@ -798,7 +901,8 @@ export default function Contrats() {
                   <div className="border border-red-200 rounded-lg">
                     <div className="bg-red-500 text-white px-4 py-3">
                       <h4 className="font-semibold flex items-center gap-2">
-                        🚨 URGENT - Expire dans 7 jours ({expiringContrats.dans7Jours.length})
+                        {getIcon('🚨')}
+                        URGENT - Expire dans 7 jours ({expiringContrats.dans7Jours.length})
                       </h4>
                     </div>
                     <div className="p-4">
@@ -838,18 +942,20 @@ export default function Contrats() {
                                 <td className="px-3 py-2">
                                   <button
                                     onClick={() => downloadContratPDF(contrat.contratId)}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2"
+                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2 flex items-center gap-1"
                                   >
-                                    📄 PDF
+                                    {getIcon('📄')}
+                                    PDF
                                   </button>
                                   <button
                                     onClick={() => {
                                       const foundContrat = contrats.find(c => c._id === contrat.contratId);
                                       if (foundContrat) handleEdit(foundContrat);
                                     }}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
                                   >
-                                    ✏️ Modifier
+                                    {getIcon('✏️')}
+                                    Modifier
                                   </button>
                                 </td>
                               </tr>
@@ -866,7 +972,8 @@ export default function Contrats() {
                   <div className="border border-orange-200 rounded-lg">
                     <div className="bg-orange-500 text-white px-4 py-3">
                       <h4 className="font-semibold flex items-center gap-2">
-                        ⚠️ RAPPEL - Expire dans 15 jours ({expiringContrats.dans15Jours.length})
+                        {getIcon('⚠️')}
+                        RAPPEL - Expire dans 15 jours ({expiringContrats.dans15Jours.length})
                       </h4>
                     </div>
                     <div className="p-4">
@@ -906,18 +1013,20 @@ export default function Contrats() {
                                 <td className="px-3 py-2">
                                   <button
                                     onClick={() => downloadContratPDF(contrat.contratId)}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2"
+                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2 flex items-center gap-1"
                                   >
-                                    📄 PDF
+                                    {getIcon('📄')}
+                                    PDF
                                   </button>
                                   <button
                                     onClick={() => {
                                       const foundContrat = contrats.find(c => c._id === contrat.contratId);
                                       if (foundContrat) handleEdit(foundContrat);
                                     }}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
                                   >
-                                    ✏️ Modifier
+                                    {getIcon('✏️')}
+                                    Modifier
                                   </button>
                                 </td>
                               </tr>
@@ -934,7 +1043,8 @@ export default function Contrats() {
                   <div className="border border-yellow-200 rounded-lg">
                     <div className="bg-yellow-500 text-white px-4 py-3">
                       <h4 className="font-semibold flex items-center gap-2">
-                        📅 INFORMATION - Expire dans 30 jours ({expiringContrats.dans30Jours.length})
+                        {getIcon('📅')}
+                        INFORMATION - Expire dans 30 jours ({expiringContrats.dans30Jours.length})
                       </h4>
                     </div>
                     <div className="p-4">
@@ -974,18 +1084,20 @@ export default function Contrats() {
                                 <td className="px-3 py-2">
                                   <button
                                     onClick={() => downloadContratPDF(contrat.contratId)}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2"
+                                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs mr-2 flex items-center gap-1"
                                   >
-                                    📄 PDF
+                                    {getIcon('📄')}
+                                    PDF
                                   </button>
                                   <button
                                     onClick={() => {
                                       const foundContrat = contrats.find(c => c._id === contrat.contratId);
                                       if (foundContrat) handleEdit(foundContrat);
                                     }}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
                                   >
-                                    ✏️ Modifier
+                                    {getIcon('✏️')}
+                                    Modifier
                                   </button>
                                 </td>
                               </tr>
@@ -999,7 +1111,7 @@ export default function Contrats() {
 
                 {expirationStats.totalExpirant === 0 && (
                   <div className="text-center py-10 text-gray-500">
-                    <div className="text-4xl mb-4">🎉</div>
+                    <div className="text-4xl mb-4">{getIcon('🎉', true)}</div>
                     <p className="text-lg font-medium">Aucun contrat n'arrive à expiration dans les 30 prochains jours</p>
                     <p className="text-sm text-gray-400 mt-2">La situation est sous contrôle !</p>
                   </div>
@@ -1026,7 +1138,7 @@ export default function Contrats() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 min-w-[150px] px-4 py-3 rounded-md transition-all ${
                 activeTab === tab.id 
-                  ? 'bg-gray-800 text-white shadow-sm' 
+                  ? 'bg-gray-600 text-white shadow-sm' 
                   : 'text-gray-600 hover:bg-gray-100'
               } font-medium flex items-center justify-center gap-2`}
             >
@@ -1041,25 +1153,26 @@ export default function Contrats() {
         </div>
       </div>
 
-      {/* Filtres */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+      {/* Filtres - Section réduite */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-          <h4 className="text-lg font-semibold text-blue-800">Filtres avancés</h4>
+          <h4 className="text-lg font-semibold text-gray-800">Filtres</h4>
           <button
             onClick={resetFilters}
-            className="border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-4 py-2 rounded transition-colors"
+            className="border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
           >
+            {getIcon('🔄')}
             Réinitialiser
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type de contrat</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type de contrat</label>
             <select
               value={filters.typeContrat}
               onChange={(e) => handleFilterChange('typeContrat', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
             >
               <option value="">Tous les types</option>
               <option value="CDI">CDI</option>
@@ -1069,11 +1182,11 @@ export default function Contrats() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
             <select
               value={filters.statut}
               onChange={(e) => handleFilterChange('statut', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
             >
               <option value="">Tous les statuts</option>
               <option value="Actif">Actif</option>
@@ -1083,11 +1196,11 @@ export default function Contrats() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
             <select
               value={filters.service}
               onChange={(e) => handleFilterChange('service', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm"
             >
               <option value="">Tous les services</option>
               {services.map(service => (
@@ -1100,8 +1213,8 @@ export default function Contrats() {
         </div>
 
         {(filters.typeContrat || filters.statut || filters.service || activeTab !== 'tous') && (
-          <div className="mt-4 p-3 bg-blue-100 rounded">
-            <div className="text-sm text-blue-800 font-medium">
+          <div className="mt-3 p-2 bg-gray-100 rounded text-sm">
+            <div className="text-gray-800 font-medium">
               Filtres actifs: 
               {filters.typeContrat && ` Type: ${filters.typeContrat}`}
               {filters.statut && ` Statut: ${filters.statut}`}
@@ -1115,7 +1228,8 @@ export default function Contrats() {
       {/* Pagination */}
       {filteredContrats.length > 0 && (
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-gray-600 text-sm">
+          <div className="text-gray-600 text-sm flex items-center gap-2">
+            {getIcon('📊')}
             Affichage de {indexOfFirstContrat + 1} à {Math.min(indexOfLastContrat, filteredContrats.length)} sur {filteredContrats.length} contrat(s)
           </div>
           
@@ -1129,7 +1243,8 @@ export default function Contrats() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              ◀ Précédent
+              {getIcon('◀')}
+              Précédent
             </button>
 
             <div className="flex gap-1">
@@ -1139,7 +1254,7 @@ export default function Contrats() {
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
                     currentPage === page 
-                      ? 'bg-gray-800 text-white' 
+                      ? 'bg-gray-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -1157,7 +1272,8 @@ export default function Contrats() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Suivant ▶
+              Suivant
+              {getIcon('▶')}
             </button>
           </div>
 
@@ -1169,7 +1285,7 @@ export default function Contrats() {
                 setContratsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -1194,7 +1310,7 @@ export default function Contrats() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr className="bg-gray-600 text-white">
                   <th className="px-4 py-3 text-left text-sm font-semibold">Utilisateur</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Poste</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
@@ -1220,8 +1336,8 @@ export default function Contrats() {
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold text-white ${
-                            contrat.user?.role === "ADMIN_RH" ? 'bg-red-500' :
-                            contrat.user?.role === "SALARIE" ? 'bg-blue-500' : 'bg-green-500'
+                            contrat.user?.role === "ADMIN_RH" ? 'bg-purple-500' :
+                            contrat.user?.role === "SALARIE" ? 'bg-gray-500' : 'bg-green-500'
                           }`}>
                             {contrat.user?.role}
                           </span>
@@ -1254,7 +1370,7 @@ export default function Contrats() {
 
                       <td className="px-4 py-3">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                          contrat.typeContrat === "CDI" ? 'bg-blue-500' :
+                          contrat.typeContrat === "CDI" ? 'bg-gray-500' :
                           contrat.typeContrat === "CDD" ? 'bg-yellow-500' : 'bg-purple-500'
                         }`}>
                           {contrat.typeContrat}
@@ -1275,7 +1391,7 @@ export default function Contrats() {
                       
                       <td className="px-4 py-3">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                          statutAffiche === "Actif" ? 'bg-green-500' :
+                          statutAffiche === "Actif" ? 'bg-green-400' :
                           statutAffiche === "Terminé" ? 'bg-gray-500' :
                           statutAffiche === "Suspendu" ? 'bg-yellow-500' :
                           statutAffiche === "Expiré" ? 'bg-red-500' : 'bg-gray-400'
@@ -1285,27 +1401,27 @@ export default function Contrats() {
                       </td>
                       
                       <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-center">
+                        <div className="flex gap-1 justify-center">
                           <button
                             onClick={() => downloadContratPDF(contrat._id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                            className="bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors border border-green-300"
                             title="Télécharger PDF"
                           >
-                            <span>📄</span>
+                            {getIcon('📄')}
                             PDF
                           </button>
                           <button
                             onClick={() => handleEdit(contrat)}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors border border-gray-300"
                           >
-                            <span>✏️</span>
+                            {getIcon('✏️')}
                             Modifier
                           </button>
                           <button
                             onClick={() => handleDelete(contrat)}
-                            className="bg-gray-200 hover:bg-red-100 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+                            className="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors border border-red-300"
                           >
-                            <span>🗑️</span>
+                            {getIcon('🗑️')}
                             Supprimer
                           </button>
                         </div>
@@ -1322,32 +1438,50 @@ export default function Contrats() {
       {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mt-6">
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Total contrats</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📊')}
+            Total contrats
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Contrats actifs</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('✅')}
+            Contrats actifs
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.actifs}</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">CDI</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📝')}
+            CDI
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.cdi}</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Contrats expirés</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('⏰')}
+            Contrats expirés
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.expires}</div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">CDD</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('📑')}
+            CDD
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.cdd}</div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Alternance</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('🎓')}
+            Alternance
+          </div>
           <div className="text-2xl font-bold text-gray-800">{stats.alternance}</div>
         </div>
       </div>

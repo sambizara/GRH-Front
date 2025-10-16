@@ -32,9 +32,99 @@ export default function Users() {
     filiere: "",
     niveau: "Licence 3",
     dureeStage: 6,
-    poste: "",
     encadreur: ""
+    // Poste supprimé pour les stagiaires
   });
+
+  // Fonction pour générer les icônes Tailwind
+  const getIcon = (iconName, isLarge = false) => {
+    const iconClass = `w-5 h-5 ${isLarge ? 'w-6 h-6' : ''}`;
+    
+    switch(iconName) {
+      case '👥': // Utilisateurs
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+          </svg>
+        );
+      case '🔍': // Recherche
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        );
+      case '➕': // Ajouter
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+      case '✏️': // Modifier
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+      case '🗑️': // Supprimer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        );
+      case '📊': // Statistiques
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case '👨‍💼': // Salariés
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        );
+      case '🎓': // Stagiaires
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+          </svg>
+        );
+      case '🔧': // Admin RH
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        );
+      case '📋': // Liste
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        );
+      case '◀': // Précédent
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        );
+      case '▶': // Suivant
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        );
+      case '✕': // Fermer
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      default:
+        return <span className={iconClass}>•</span>;
+    }
+  };
 
   // Charger les salariés disponibles
   useEffect(() => {
@@ -93,7 +183,6 @@ export default function Users() {
       return [
         ...baseHeaders,
         { key: 'matricule', label: 'Matricule' },
-        { key: 'poste', label: 'Poste' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
       ];
@@ -117,7 +206,6 @@ export default function Users() {
         { key: 'filiere', label: 'Filière' },
         { key: 'niveau', label: 'Niveau' },
         { key: 'dureeStage', label: 'Durée (mois)' },
-        { key: 'poste', label: 'Poste' },
         { key: 'encadreur', label: 'Encadreur' },
         { key: 'dateCreation', label: 'Date création' },
         { key: 'actions', label: 'Actions' }
@@ -154,9 +242,9 @@ export default function Users() {
 
       case 'role':
         const roleStyles = {
-          "ADMIN_RH": "bg-gray-100 text-gray-800 border border-gray-300",
-          "SALARIE": "bg-blue-50 text-blue-800 border border-blue-200",
-          "STAGIAIRE": "bg-green-50 text-green-800 border border-green-200"
+          "ADMIN_RH": "bg-purple-100 text-purple-800 border border-purple-200",
+          "SALARIE": "bg-blue-100 text-blue-800 border border-blue-200",
+          "STAGIAIRE": "bg-green-100 text-green-800 border border-green-200"
         };
         return (
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${roleStyles[user.role]}`}>
@@ -207,13 +295,6 @@ export default function Users() {
           </span>
         ) : "-";
 
-      case 'poste':
-        return user.poste ? (
-          <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-medium border border-green-200">
-            {user.poste}
-          </span>
-        ) : "-";
-
       case 'encadreur':
         if (user.encadreur) {
           const encadreur = salariesDisponibles.find(s => s._id === user.encadreur);
@@ -240,16 +321,16 @@ export default function Users() {
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => handleEdit(user)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors border border-gray-300"
             >
-              <span>✏️</span>
+              {getIcon('✏️')}
               Modifier
             </button>
             <button
               onClick={() => handleDelete(user)}
-              className="bg-red-200 hover:bg-red-300 text-red-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+              className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors border border-red-300"
             >
-              <span>🗑️</span>
+              {getIcon('🗑️')}
               Supprimer
             </button>
           </div>
@@ -321,7 +402,6 @@ export default function Users() {
       filiere: "",
       niveau: "Licence 3",
       dureeStage: 6,
-      poste: "",
       encadreur: ""
     });
     setEditingUser(null);
@@ -388,8 +468,8 @@ export default function Users() {
         userData.filiere = form.filiere;
         userData.niveau = form.niveau;
         userData.dureeStage = parseInt(form.dureeStage);
-        userData.poste = form.poste;
         userData.encadreur = form.encadreur;
+        // Poste supprimé pour les stagiaires
       }
 
       console.log("📤 Données envoyées:", userData);
@@ -450,8 +530,8 @@ export default function Users() {
       filiere: user.filiere || "",
       niveau: user.niveau || "Licence 3",
       dureeStage: user.dureeStage || 6,
-      poste: user.poste || "",
       encadreur: user.encadreur || ""
+      // Poste supprimé pour les stagiaires
     });
     setShowModal(true);
   };
@@ -509,29 +589,32 @@ export default function Users() {
 
       {/* En-tête avec bouton d'ajout et recherche */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
+        <div className="flex items-center gap-3">
+          {getIcon('👥', true)}
+          <h1 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
           {/* Barre de recherche */}
           <div className="relative">
             <input
               type="text"
-              placeholder="Rechercher par nom, prénom, email, matricule ou poste..."
+              placeholder="Rechercher par nom, prénom, email, matricule..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-4 pr-10 py-2 border border-gray-300 rounded-lg w-full sm:w-80 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {getIcon('🔍')}
+            </div>
           </div>
 
           {/* Bouton Ajouter */}
           <button
             onClick={handleAddUser}
-            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
           >
-            <span>+</span>
+            {getIcon('➕')}
             Ajouter un utilisateur
           </button>
         </div>
@@ -541,20 +624,21 @@ export default function Users() {
       <div className="bg-white rounded-lg p-1 mb-6 border border-gray-200 shadow-sm">
         <div className="flex flex-wrap gap-1">
           {[
-            { key: 'tous', label: 'Tous les utilisateurs', count: users.length },
-            { key: 'SALARIE', label: 'Salariés', count: getUserCountByRole('SALARIE') },
-            { key: 'STAGIAIRE', label: 'Stagiaires', count: getUserCountByRole('STAGIAIRE') },
-            { key: 'ADMIN_RH', label: 'Admins RH', count: getUserCountByRole('ADMIN_RH') }
+            { key: 'tous', label: 'Tous les utilisateurs', count: users.length, icon: '📋' },
+            { key: 'SALARIE', label: 'Salariés', count: getUserCountByRole('SALARIE'), icon: '👨‍💼' },
+            { key: 'STAGIAIRE', label: 'Stagiaires', count: getUserCountByRole('STAGIAIRE'), icon: '🎓' },
+            { key: 'ADMIN_RH', label: 'Admins RH', count: getUserCountByRole('ADMIN_RH'), icon: '🔧' }
           ].map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 min-w-[150px] px-4 py-3 rounded-md transition-all ${
                 activeTab === tab.key 
-                  ? 'bg-gray-800 text-white shadow-sm' 
+                  ? 'bg-gray-600 text-white shadow-sm' 
                   : 'text-gray-600 hover:bg-gray-100'
               } font-medium flex items-center justify-center gap-2`}
             >
+              {getIcon(tab.icon)}
               {tab.label}
               <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                 activeTab === tab.key ? 'bg-white bg-opacity-20' : 'bg-gray-200'
@@ -568,21 +652,24 @@ export default function Users() {
 
       {/* Indicateur de filtre actif */}
       {activeTab !== 'tous' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-center gap-3">
-          <span className="text-blue-600">🔍</span>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <div className="text-gray-600">
+            {getIcon('🔍')}
+          </div>
           <div>
-            <strong className="text-blue-800">
+            <strong className="text-gray-800">
               Filtre actif : {activeTab === 'SALARIE' ? 'Salariés' : activeTab === 'STAGIAIRE' ? 'Stagiaires' : 'Admins RH'}
             </strong>
-            <div className="text-sm text-blue-600 mt-1">
+            <div className="text-sm text-gray-600 mt-1">
               Affichage de {filteredUsers.length} utilisateur(s) sur {users.length} au total
             </div>
           </div>
           <button
             onClick={() => setActiveTab('tous')}
-            className="ml-auto border border-blue-600 text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-600 hover:text-white transition-colors"
+            className="ml-auto border border-gray-600 text-gray-600 px-3 py-1 rounded text-sm font-medium hover:bg-gray-600 hover:text-white transition-colors flex items-center gap-1"
           >
-            ✕ Supprimer le filtre
+            {getIcon('✕')}
+            Supprimer le filtre
           </button>
         </div>
       )}
@@ -592,16 +679,17 @@ export default function Users() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             {/* En-tête du modal */}
-            <div className="bg-gray-800 text-white px-6 py-4">
+            <div className="bg-gray-600 text-white px-6 py-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  {getIcon(editingUser ? '✏️' : '➕')}
                   {editingUser ? "Modifier l'utilisateur" : "Ajouter un nouvel utilisateur"}
                 </h2>
                 <button
                   onClick={resetForm}
-                  className="text-white hover:text-gray-300 text-2xl font-bold"
+                  className="text-white hover:text-gray-200 text-2xl font-bold"
                 >
-                  ×
+                  {getIcon('✕')}
                 </button>
               </div>
             </div>
@@ -618,7 +706,7 @@ export default function Users() {
                     value={form.nom}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -630,7 +718,7 @@ export default function Users() {
                     value={form.prenom}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -642,7 +730,7 @@ export default function Users() {
                     value={form.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -653,7 +741,7 @@ export default function Users() {
                     value={form.sexe}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   >
                     <option value="Homme">Homme</option>
                     <option value="Femme">Femme</option>
@@ -668,7 +756,7 @@ export default function Users() {
                     value={form.dateNaissance}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -679,7 +767,7 @@ export default function Users() {
                     name="telephone"
                     value={form.telephone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -691,7 +779,7 @@ export default function Users() {
                     value={form.adresse}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -702,7 +790,7 @@ export default function Users() {
                     value={form.role}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   >
                     <option value="SALARIE">Salarié</option>
                     <option value="ADMIN_RH">Admin RH</option>
@@ -722,7 +810,7 @@ export default function Users() {
                         onChange={handleInputChange}
                         required
                         placeholder="Ex: SAL001, EMP2024..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 font-mono"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Identifiant unique du salarié
@@ -737,7 +825,7 @@ export default function Users() {
                         value={form.dateEmbauche}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -747,7 +835,7 @@ export default function Users() {
                         name="situationFamiliale"
                         value={form.situationFamiliale}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                       >
                         <option value="Célibataire">Célibataire</option>
                         <option value="Marié(e)">Marié(e)</option>
@@ -764,7 +852,7 @@ export default function Users() {
                         value={form.nombreEnfants}
                         onChange={handleInputChange}
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                   </>
@@ -782,7 +870,7 @@ export default function Users() {
                         onChange={handleInputChange}
                         required
                         placeholder="Nom de l'école"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -795,7 +883,7 @@ export default function Users() {
                         onChange={handleInputChange}
                         required
                         placeholder="Filière d'étude"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -806,7 +894,7 @@ export default function Users() {
                         value={form.niveau}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                       >
                         <option value="Licence 1">Licence 1</option>
                         <option value="Licence 2">Licence 2</option>
@@ -828,24 +916,8 @@ export default function Users() {
                         min="1"
                         max="24"
                         placeholder="6"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
-                    </div>
-
-                    {/* Champ poste optionnel pour stagiaire */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Poste</label>
-                      <input
-                        type="text"
-                        name="poste"
-                        value={form.poste}
-                        onChange={handleInputChange}
-                        placeholder="Poste optionnel"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Poste optionnel pour le stagiaire
-                      </p>
                     </div>
 
                     {/* Sélection de l'encadreur parmi les salariés disponibles */}
@@ -856,7 +928,7 @@ export default function Users() {
                         value={form.encadreur}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                       >
                         <option value="">Sélectionner un encadreur</option>
                         {salariesDisponibles.length > 0 ? (
@@ -893,7 +965,7 @@ export default function Users() {
                     onChange={handleInputChange}
                     required={!editingUser}
                     placeholder={editingUser ? "Laisser vide pour ne pas modifier" : ""}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -908,7 +980,7 @@ export default function Users() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
                   >
                     {editingUser ? "Modifier" : "Créer"}
                   </button>
@@ -922,7 +994,8 @@ export default function Users() {
       {/* Pagination */}
       {filteredUsers.length > 0 && (
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-gray-600 text-sm">
+          <div className="text-gray-600 text-sm flex items-center gap-2">
+            {getIcon('📊')}
             Affichage de {indexOfFirstUser + 1} à {Math.min(indexOfLastUser, filteredUsers.length)} sur {filteredUsers.length} utilisateur(s)
           </div>
           
@@ -936,7 +1009,8 @@ export default function Users() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              ◀ Précédent
+              {getIcon('◀')}
+              Précédent
             </button>
 
             <div className="flex gap-1">
@@ -946,7 +1020,7 @@ export default function Users() {
                   onClick={() => handlePageChange(page)}
                   className={`px-3 py-1 border border-gray-300 rounded text-sm min-w-[40px] ${
                     currentPage === page 
-                      ? 'bg-gray-800 text-white' 
+                      ? 'bg-gray-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -964,7 +1038,8 @@ export default function Users() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              Suivant ▶
+              Suivant
+              {getIcon('▶')}
             </button>
           </div>
 
@@ -973,7 +1048,7 @@ export default function Users() {
             <select
               value={usersPerPage}
               onChange={(e) => setCurrentPage(1)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -998,7 +1073,7 @@ export default function Users() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr className="bg-gray-600 text-white">
                   {getTableHeaders().map(header => (
                     <th 
                       key={header.key}
@@ -1034,26 +1109,38 @@ export default function Users() {
       {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Total utilisateurs</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('👥')}
+            Total utilisateurs
+          </div>
           <div className="text-2xl font-bold text-gray-800">{users.length}</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Admins RH</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('🔧')}
+            Admins RH
+          </div>
           <div className="text-2xl font-bold text-gray-800">
             {getUserCountByRole('ADMIN_RH')}
           </div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Salariés</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('👨‍💼')}
+            Salariés
+          </div>
           <div className="text-2xl font-bold text-gray-800">
             {getUserCountByRole('SALARIE')}
           </div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm text-gray-600">Stagiaires</div>
+          <div className="text-sm text-gray-600 flex items-center gap-2">
+            {getIcon('🎓')}
+            Stagiaires
+          </div>
           <div className="text-2xl font-bold text-gray-800">
             {getUserCountByRole('STAGIAIRE')}
           </div>

@@ -31,6 +31,89 @@ const Dashboard = () => {
     autres: 0
   });
 
+  // Fonction pour générer les icônes Tailwind
+  const getIcon = (iconName, isLarge = false) => {
+    const iconClass = `w-5 h-5 ${isLarge ? 'w-8 h-8' : ''}`;
+    
+    switch(iconName) {
+      case '👥': // Utilisateurs / Employés
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+          </svg>
+        );
+      case '🏖️': // Congés
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case '🎓': // Stagiaires / Stages
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+          </svg>
+        );
+      case '📝': // Contrats
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '📊': // Dashboard / Statistiques
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case '📄': // Attestations
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '📋': // Rapports
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case '✅': // Éligibilité
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case '📅': // Jours restants
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case '🎯': // Tâches
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        );
+      case '📈': // Activités
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        );
+      case '🔔': // Alertes
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-3.78-4.26A2 2 0 114 4.75a9.97 9.97 0 005.24 8.56 2 2 0 111.52 0 9.97 9.97 0 005.24-8.56 2 2 0 11-2.46 2.35 5.97 5.97 0 01-3.78 4.26L10 14l-.76-5.44z" />
+          </svg>
+        );
+      default:
+        return <span className={iconClass}>•</span>;
+    }
+  };
+
   // Fonction pour calculer "il y a X temps"
   const calculateTimeAgo = (date) => {
     const now = new Date();
@@ -88,8 +171,7 @@ const Dashboard = () => {
         total: allContrats.length,
         cdi: allContrats.filter(contrat => contrat.typeContrat === 'CDI').length,
         cdd: allContrats.filter(contrat => contrat.typeContrat === 'CDD').length,
-        stage: allContrats.filter(contrat => contrat.typeContrat === 'Stage').length,
-        interim: allContrats.filter(contrat => contrat.typeContrat === 'Intérim').length,
+        alternance: allContrats.filter(contrat => contrat.typeContrat === 'Alternance').length,
         autres: allContrats.filter(contrat => 
           !['CDI', 'CDD', 'Stage', 'Intérim'].includes(contrat.typeContrat)
         ).length
@@ -612,10 +694,16 @@ const fetchSalarieStats = useCallback(async () => {
 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Répartition des Utilisateurs</h3>
+        <div className="flex items-center gap-3 mb-4">
+          {getIcon('📊')}
+          <h3 className="text-lg font-semibold text-gray-900">Répartition des Utilisateurs</h3>
+        </div>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">👨‍💼 Salariés</span>
+            <div className="flex items-center gap-2">
+              {getIcon('👨‍💼')}
+              <span className="text-sm font-medium text-gray-700">Salariés</span>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">{userStats.salarie}</span>
               <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -629,7 +717,10 @@ const fetchSalarieStats = useCallback(async () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">🎓 Stagiaires</span>
+            <div className="flex items-center gap-2">
+              {getIcon('🎓')}
+              <span className="text-sm font-medium text-gray-700">Stagiaires</span>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">{userStats.stagiaire}</span>
               <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -643,7 +734,10 @@ const fetchSalarieStats = useCallback(async () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">🔧 Admin RH</span>
+            <div className="flex items-center gap-2">
+              {getIcon('🔧')}
+              <span className="text-sm font-medium text-gray-700">Admin RH</span>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">{userStats.adminRh}</span>
               <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -659,7 +753,10 @@ const fetchSalarieStats = useCallback(async () => {
         
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">👥 Total utilisateurs</span>
+            <div className="flex items-center gap-2">
+              {getIcon('👥')}
+              <span className="text-gray-600">Total utilisateurs</span>
+            </div>
             <span className="font-semibold text-gray-900">{userStats.total}</span>
           </div>
         </div>
@@ -671,23 +768,25 @@ const fetchSalarieStats = useCallback(async () => {
   const ContratTypeChart = () => {
     const total = contratStats.total || 1;
     const types = [
-      { label: '📄 CDI', value: contratStats.cdi, color: 'bg-green-500' },
-      { label: '📑 CDD', value: contratStats.cdd, color: 'bg-blue-500' },
-      { label: '🎓 Stage', value: contratStats.stage, color: 'bg-yellow-500' },
-      { label: '⏱️ Intérim', value: contratStats.interim, color: 'bg-orange-500' },
-      { label: '📋 Autres', value: contratStats.autres, color: 'bg-gray-500' }
+      { label: 'CDI', value: contratStats.cdi, color: 'bg-green-500', icon: '📄' },
+      { label: 'CDD', value: contratStats.cdd, color: 'bg-blue-500', icon: '📑' },
+      { label: 'Alternance', value: contratStats.alternance, color: 'bg-orange-500', icon: '⏱️' },
+      { label: 'Autres', value: contratStats.autres, color: 'bg-gray-500', icon: '📋' }
     ];
 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">📑 Types de Contrats</h3>
+        <div className="flex items-center gap-3 mb-4">
+          {getIcon('📑')}
+          <h3 className="text-lg font-semibold text-gray-900">Types de Contrats</h3>
+        </div>
         <div className="space-y-3">
           {types.map((type, index) => {
             const percentage = total > 0 ? (type.value / total) * 100 : 0;
             return (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${type.color}`}></div>
+                  {getIcon(type.icon)}
                   <span className="text-sm font-medium text-gray-700">{type.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -707,7 +806,10 @@ const fetchSalarieStats = useCallback(async () => {
         
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">📊 Total contrats</span>
+            <div className="flex items-center gap-2">
+              {getIcon('📊')}
+              <span className="text-gray-600">Total contrats</span>
+            </div>
             <span className="font-semibold text-gray-900">{contratStats.total}</span>
           </div>
         </div>
@@ -754,7 +856,7 @@ const fetchSalarieStats = useCallback(async () => {
         </span>
       </div>
 
-      {/* Cartes de statistiques AVEC ICÔNES */}
+      {/* Cartes de statistiques AVEC ICÔNES TAILWIND */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, index) => (
           <div 
@@ -763,7 +865,9 @@ const fetchSalarieStats = useCallback(async () => {
           >
             <div className="flex items-center">
               <div className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0`}>
-                <span className="text-white text-xl">{stat.icon}</span>
+                <div className="text-white">
+                  {getIcon(stat.icon, true)}
+                </div>
               </div>
               <div className="ml-4">
                 <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
@@ -786,10 +890,13 @@ const fetchSalarieStats = useCallback(async () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Activités récentes */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {userRole === 'ADMIN_RH' ? '📈 Activités récentes' : 
-             userRole === 'SALARIE' ? '📈 Mes dernières activités' : '📈 Mes rapports récents'}
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            {getIcon('📈')}
+            <h2 className="text-xl font-semibold text-gray-900">
+              {userRole === 'ADMIN_RH' ? 'Activités récentes' : 
+               userRole === 'SALARIE' ? 'Mes dernières activités' : 'Mes rapports récents'}
+            </h2>
+          </div>
           <div className="space-y-4">
             {recentActivities.map((activity, index) => (
               <div 
@@ -806,10 +913,13 @@ const fetchSalarieStats = useCallback(async () => {
 
         {/* Alertes et rappels */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {userRole === 'ADMIN_RH' ? '🔔 Alertes et rappels' : 
-             userRole === 'SALARIE' ? '🔔 Mes notifications' : '🔔 Mes alertes'}
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            {getIcon('🔔')}
+            <h2 className="text-xl font-semibold text-gray-900">
+              {userRole === 'ADMIN_RH' ? 'Alertes et rappels' : 
+               userRole === 'SALARIE' ? 'Mes notifications' : 'Mes alertes'}
+            </h2>
+          </div>
           <div className="space-y-3">
             {alerts.map((alert, index) => {
               const styles = getAlertStyles(alert.type);
